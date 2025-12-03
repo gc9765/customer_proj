@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Session Name="D:\GUQIAO3\36533_1111_intercom - SERVER\project\fpv_app_umac4.cdkws">
+  <int Value="2" Name="m_selectedTab"/>
+  <wxString Value="D:\GUQIAO3\36533_1111_intercom - SERVER\project\fpv_app_umac4.cdkws" Name="m_workspaceName"/>
+  <TabInfoArray Name="TabInfoArray">
+    <TabInfo>
+      <wxString Value="D:\GUQIAO3\36533_1111_intercom - SERVER\project\psram_cfg.h" Name="FileName"/>
+      <int Value="0" Name="FirstVisibleLine"/>
+      <int Value="1" Name="CurrentLine"/>
+      <wxArrayString Name="Bookmarks"/>
+      <IntVector Name="CollapsedFolds"/>
+    </TabInfo>
+    <TabInfo>
+      <wxString Value="D:\GUQIAO3\36533_1111_intercom - SERVER\project\client_code\babymonitor\babyprotocol.c" Name="FileName"/>
+      <int Value="1" Name="FirstVisibleLine"/>
+      <int Value="1" Name="CurrentLine"/>
+      <wxArrayString Name="Bookmarks"/>
+      <IntVector Name="CollapsedFolds"/>
+    </TabInfo>
+    <TabInfo>
+      <wxString Value="D:\GUQIAO3\36533_1111_intercom - SERVER\project\client_code\babymonitor\babyprotocol.h" Name="FileName"/>
+      <int Value="1" Name="FirstVisibleLine"/>
+      <int Value="10" Name="CurrentLine"/>
+      <wxArrayString Name="Bookmarks"/>
+      <IntVector Name="CollapsedFolds"/>
+    </TabInfo>
+  </TabInfoArray>
+  <SerializedObject Name="m_breakpoints">
+    <long Value="0" Name="Count"/>
+  </SerializedObject>
+</Session>

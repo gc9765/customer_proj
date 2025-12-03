@@ -228,10 +228,10 @@ void send_photo_thread()
 	uint8_t los_num;
 	uint8_t mclk_set;
 	struct dvp_device *dvp_dev;
-	dvp_dev = (struct dvp_device *)dev_get(HG_DVP_DEVID);
+	dvp_dev = (struct dvp_device *)dev_get(HG_DVP_DEVID);   // 仅获取了摄像头DVP的数据流
 	uint8 wait_cnt = 0;
 
-start_jpeg();
+start_jpeg();     //开启JPEG图像编解码？
 
     #if PROTOCOL_CLIENT
         #if 0

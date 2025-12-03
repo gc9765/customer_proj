@@ -103,7 +103,7 @@ void ui_event_albumPage(lv_event_t * e){
 			#endif			
 			break;
 			
-			case AD_DOWN:
+			case AD_VOL_DOWN:
 			os_printf("## KEY_VOL_DOWN=\n");
 
 			if(camSetParam.volumeSet)
@@ -116,7 +116,7 @@ void ui_event_albumPage(lv_event_t * e){
 			os_printf("## cur_volumeSet=%d \n",camSetParam.volumeSet);
 			break;
 
-			case AD_UP:
+			case AD_VOL_UP:
 			os_printf("## KEY_VOL_UP=\n");
 
 			if(camSetParam.volumeSet<10)
@@ -196,7 +196,7 @@ void ui_event_albumPage(lv_event_t * e){
 			}
 			break;
 			
-			case AD_D:
+			case AD_BACK:
 			case KEY_BACK:
 			global_avi_exit = 1;
 			lv_page_select(PAGE_HOME);
@@ -527,7 +527,7 @@ void ui_albumPage_screen_init(){
 		camSetParam.volumeSet=10;
 
 	render_vol_level(camSetParam.volumeSet);
-
+	
 	{
 		extern void mute_speaker(uint8_t mute);
 		mute_speaker(0);

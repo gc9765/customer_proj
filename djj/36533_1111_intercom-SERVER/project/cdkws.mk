@@ -7,15 +7,15 @@ Project_Title:
 
 Project_PreBuild:
 	@echo Executing Pre Build commands ...
-	@export CDKPath="D:/C-Sky/CDK" CDK_VERSION="V2.10.3" ProjectPath="D:/GUQIAO3/36533_1111_intercom - SERVER/project/" && "D:/GUQIAO3/36533_1111_intercom - SERVER/project/prebuild.sh" $< 
+	@export CDKPath="D:/C-Sky/CDK" CDK_VERSION="V2.8.8" ProjectPath="D:/Work/Customer_Engineering/Djj/36533_1111_intercom-SERVER/project/" && D:/Work/Customer_Engineering/Djj/36533_1111_intercom-SERVER/project/prebuild.sh $<
 	@echo Done
 
 Project_Build:
-	@make -r -f fpv_app_umac4.mk -j 4 -C  ./ 
+	@make -r -f fpv_app_umac4.mk -j 8 -C  ./ 
 
 Project_PostBuild:
 	@echo Executing Post Build commands ...
-	@export CDKPath="D:/C-Sky/CDK" CDK_VERSION="V2.10.3" ProjectPath="D:/GUQIAO3/36533_1111_intercom - SERVER/project/" && "D:/GUQIAO3/36533_1111_intercom - SERVER/project/BuildBIN.sh" 
+	@export CDKPath="D:/C-Sky/CDK" CDK_VERSION="V2.8.8" ProjectPath="D:/Work/Customer_Engineering/Djj/36533_1111_intercom-SERVER/project/" && D:/Work/Customer_Engineering/Djj/36533_1111_intercom-SERVER/project/BuildBIN.sh
 	@echo Done
 
 

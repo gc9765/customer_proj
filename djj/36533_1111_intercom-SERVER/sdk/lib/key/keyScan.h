@@ -23,23 +23,27 @@ enum
 enum 
 {
   KEY_NONE,
-  AD_UP,
-  AD_DOWN,
-  AD_LEFT,
-  AD_RIGHT,
-  AD_PRESS,
-  AD_A,
-  AD_B,
-  AD_C,
-  AD_D,
-  AD_SPEACH,
+  // AD多按键 (PA3) - 根据原理图物理按键明确定义
+  AD_LEFT,      // SW8向上键(13.3K) → 左键功能
+  AD_RIGHT,     // SW7向下键(51K) → 右键功能
+  AD_VOL_UP,    // SW4音量+键(5.1K) → 音量增加功能
+  AD_VOL_DOWN,  // SW5音量-键(30K) → 音量减少功能
+  AD_PRESS,     // SW3确认键(0Ω) → OK确认功能
+  AD_BACK,      // SW9返回键(100K) → 返回功能
+  
+  // GPIO按键
+  KEY_CALL,     // PA14发射键
+  KEY_STICKER,  // 贴纸键(USB_DP)
+  KEY_M,        // USB_DM M键
 
-  KEY_HOME,
-  KEY_DELECT,
-  KEY_FORMAT_SD,
+  KEY_HOME, 
   KEY_VOL_UP,
   KEY_VOL_DOWN,
   KEY_BACK,
+  
+  KEY_DELECT,
+  KEY_FORMAT_SD,
+
   KEY_BROWSE,
   KEY_CAMERA,
   KEY_RECORD,
@@ -82,7 +86,7 @@ struct key_channel_t
   keyprepare_func prepare;//scan之前的准备,可以设置为NULL，也可以去设置enable值来作为是否要进行按键检测
   keyscan_func    scan; //获取按键键值 
   const void           *key_table;//按键表格,scan需要用到,如果是adc需要根据表格获取是哪个按键被按下
-  const keys_t          *key_arg;
+  const keys_t          *key_arg; //按键参数,scan需要用到,比如长按时间,重复时间等
 
 
   void           *priv;

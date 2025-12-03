@@ -8,7 +8,7 @@
 #include "keyWork.h"
 #include "keyScan.h"
 #include "adkey.h"
-#include "power_checkkey.h"
+#include "iokey.h"
 #include "osal/irq.h"
 /*****************************************
  * 按照不同按键,请注册对应按键进来,参看adkey.c
@@ -21,12 +21,11 @@
  * static key_channel_t  *button_channels[] = {&adkey_key,&powercheck_key,NULL};
 *****************************************/
 
-static key_channel_t  *button_channels[] = {&adkey_key,&adkey_key2,NULL};
-
-
-
-
-
+static key_channel_t  *button_channels[] = {&adkey_key,  //AD 多按键
+											&call_key,   //发射键
+											&sticker_key,//贴纸键
+											&m_key,      //魔音键
+											NULL};
 
 //添加其他不同类型的按键头文件
 static void *g_key_msgq = NULL;

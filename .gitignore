@@ -12,6 +12,8 @@ out/
 djj/36533_1111_intercom-SERVER/output/
 djj/**/obj/
 djj/**/bin/
+# IDE
+djj/36533_1111_intercom-SERVER/project/.cdk/
 
 
 

@@ -139,10 +139,10 @@ void ui_event_cameraPage(lv_event_t * e){
 	{
 		switch(*key_val)
 		{
-			case AD_UP:
+			case AD_VOL_UP:
 			break;
 
-			case AD_DOWN:
+			case AD_VOL_DOWN:
 			break;
 
 			case AD_LEFT: 
@@ -163,7 +163,7 @@ void ui_event_cameraPage(lv_event_t * e){
 			// 	dvp_frontback_exchange();
 			// }
 			// break;
-			case AD_D:
+			case AD_BACK:
 			case KEY_BACK:
 
 			if(rec_open)

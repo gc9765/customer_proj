@@ -218,14 +218,14 @@ uint32_t key_seek_callback(struct key_callback_list_s *callback_list,uint32_t ke
     if(!cur_mp3_info)
 		return 0;
         
-	if(((keyvalue>>8) != AD_A) && ((keyvalue>>8) != AD_B))
+	if(((keyvalue>>8) != AD_LEFT) && ((keyvalue>>8) != AD_RIGHT))
 		return 0;  
     if(get_mp3_decode_status() == MP3_STOP) {
 		_os_printf("mp3 stop\n");
         return 0;
 	}
     key_val = (keyvalue & 0xff); 
-    if((keyvalue>>8) == AD_A) {
+    if((keyvalue>>8) == AD_LEFT) {
         if(key_val == KEY_EVENT_DOWN) {
             os_sema_down(&seek_sema,5000);
 			set_mp3_seek(-cur_mp3_info->once_move_time);
@@ -238,7 +238,7 @@ uint32_t key_seek_callback(struct key_callback_list_s *callback_list,uint32_t ke
             os_sema_up(&seek_sema);
         }        
     }
-    else if((keyvalue>>8) == AD_B) {
+    else if((keyvalue>>8) == AD_RIGHT) {
         if(key_val == KEY_EVENT_DOWN) {			
             os_sema_down(&seek_sema,5000);
 			set_mp3_seek(cur_mp3_info->once_move_time);           

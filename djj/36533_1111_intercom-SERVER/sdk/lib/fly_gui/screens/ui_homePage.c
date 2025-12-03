@@ -31,26 +31,26 @@ void ui_event_homePage(lv_event_t * e){
 		switch(*key_val)
 		{
 			case AD_LEFT: 
-			case AD_UP:
-            printf("AD_UP \n");            
+			case AD_VOL_UP:
+            //printf("AD_UP \n");            
             if(camera_gvar.pagebtn_index>0)
                 --camera_gvar.pagebtn_index;
             else
-                camera_gvar.pagebtn_index =2;
-			printf("## up camera_gvar.pagebtn_index=%d \n",camera_gvar.pagebtn_index);
+                camera_gvar.pagebtn_index =3;
+			//printf("## up camera_gvar.pagebtn_index=%d \n",camera_gvar.pagebtn_index);
 			camera_gvar.immediately_reflash_flag=1;
 			break;
 			
 			case AD_RIGHT:
-			case AD_DOWN:
-            printf("AD_DOWN \n");
-             if(camera_gvar.pagebtn_index<2)
+			case AD_VOL_DOWN:
+            //printf("AD_DOWN \n");
+             if(camera_gvar.pagebtn_index<3)
                 ++camera_gvar.pagebtn_index;
             else
                camera_gvar.pagebtn_index =0;
 
 			camera_gvar.immediately_reflash_flag=1;
-			printf("##down  camera_gvar.pagebtn_index=%d \n",camera_gvar.pagebtn_index);
+			//printf("##down  camera_gvar.pagebtn_index=%d \n",camera_gvar.pagebtn_index);
 			break;
 
 
@@ -100,10 +100,10 @@ void ui_homePage_screen_init(){
 	lv_style_set_pad_all(&menuPanelStyle, 0);
 	lv_style_set_pad_gap(&menuPanelStyle,0);
 
-/****init  page_btn  style***/
+/****init  page_btn  style***/  // 修改按钮样式
 	lv_style_init(&pageBtnStyle);
-	lv_style_set_width(&pageBtnStyle, 92);
-	lv_style_set_height(&pageBtnStyle, 110);
+	lv_style_set_width(&pageBtnStyle, 60);  //92-->70
+	lv_style_set_height(&pageBtnStyle, 90);  //110->90
 	 lv_style_set_bg_color(&pageBtnStyle, lv_color_hex(0x101018));	//0x101018
 	lv_style_set_bg_opa(&pageBtnStyle, 0);	
 	lv_style_set_shadow_color(&pageBtnStyle, lv_color_make(0x00, 0x00, 0x00));
@@ -117,10 +117,10 @@ void ui_homePage_screen_init(){
 
 	// lv_style_set_radius(&pageBtnStyle,80);
 
-/****init  btn_img  style***/
+/****init  btn_img  style***/  //图标样式
 	lv_style_init(&btnImgStyle);
-	lv_style_set_width(&btnImgStyle, 92);
-	lv_style_set_height(&btnImgStyle, 96);
+	lv_style_set_width(&btnImgStyle, 60);    //92-->60
+	lv_style_set_height(&btnImgStyle, 62);   // 96-->60
 	 lv_style_set_bg_color(&btnImgStyle, lv_color_hex(0x000000));	//0x101018
 	//lv_style_set_bg_opa(&btnImgStyle, 0);	
 	lv_style_set_shadow_color(&btnImgStyle, lv_color_make(0x00, 0x00, 0x00));
@@ -138,21 +138,55 @@ void ui_homePage_screen_init(){
 	
 	
 /*-----------home page---------------*/
-	ui_homePage = lv_obj_create(lv_scr_act());
 
+    // 控件部分
+	ui_homePage = lv_obj_create(lv_scr_act());
 	lv_obj_clear_flag( ui_homePage, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
 	// lv_obj_set_flex_flow(ui_homePage,LV_FLEX_FLOW_COLUMN);
 	// lv_obj_set_flex_align(ui_homePage, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_SPACE_EVENLY);
 	lv_obj_add_style(ui_homePage, &menuPanelStyle, 0);
 	lv_obj_set_style_text_font(ui_homePage, &alifangyuan16, 0);
-	lv_obj_set_flex_flow(ui_homePage,LV_FLEX_FLOW_ROW);
-	lv_obj_set_flex_align(ui_homePage, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+	lv_obj_set_flex_flow(ui_homePage,LV_FLEX_FLOW_COLUMN);      //
+	lv_obj_set_flex_align(ui_homePage, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+	lv_obj_set_style_pad_top(ui_homePage, 55, 0);  // 顶部间距
 	// lv_obj_set_style_bg_img_src(ui_homePage, &intercom_bglogo, 0);
-	curPage_obj = ui_homePage;
-	lv_obj_add_event_cb(curPage_obj, event_handler, LV_EVENT_ALL, NULL);
+	lv_obj_set_style_pad_row(ui_homePage, 20, 0);      // 行间距60像素
+    lv_obj_set_style_pad_bottom(ui_homePage, 0, 0);   // 底部边距
+
+	
+	
+    // 创建第一行容器 (对讲 + 相机)
+    lv_obj_t * row1 = lv_obj_create(ui_homePage);
+    lv_obj_set_size(row1, LV_PCT(100), LV_SIZE_CONTENT);  // 宽度100%，高度自适应
+    lv_obj_clear_flag(row1, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_flex_flow(row1, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(row1, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+	lv_obj_set_style_pad_left(row1, 35, 0);
+	lv_obj_set_style_pad_column(row1, 50, 0);
+	// 添加透明背景设置
+    lv_obj_set_style_bg_opa(row1, LV_OPA_TRANSP, 0);  // 设置背景透明
+    lv_obj_set_style_border_width(row1, 0, 0);         // 移除边框
+    lv_obj_set_style_outline_width(row1, 0, 0);       // 移除轮廓
+
+	
+    // 创建第二行容器 (相册 + 设置)
+    lv_obj_t * row2 = lv_obj_create(ui_homePage);
+    lv_obj_set_size(row2, LV_PCT(100), LV_SIZE_CONTENT);  // 宽度100%，高度自适应
+    lv_obj_clear_flag(row2, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_flex_flow(row2, LV_FLEX_FLOW_ROW);
+    lv_obj_set_flex_align(row2, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_left(row2, 35, 0);
+	lv_obj_set_style_pad_column(row2, 50, 0);
+	lv_obj_set_style_bg_opa(row2, LV_OPA_TRANSP, 0);  // 设置背景透明
+    lv_obj_set_style_border_width(row2, 0, 0);         // 移除边框
+    lv_obj_set_style_outline_width(row2, 0, 0);       // 移除轮廓
+
+	
+    curPage_obj = ui_homePage;
+    lv_obj_add_event_cb(curPage_obj, event_handler, LV_EVENT_ALL, NULL);
 
 /**ui_intercomBtn **/
-	lv_obj_t * ui_intercomBtn = lv_obj_create(ui_homePage);
+	lv_obj_t * ui_intercomBtn = lv_obj_create(row1);
 	lv_obj_clear_flag( ui_intercomBtn, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
 	lv_obj_set_flex_flow(ui_intercomBtn,LV_FLEX_FLOW_COLUMN);
 	lv_obj_set_flex_align(ui_intercomBtn, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -177,7 +211,7 @@ void ui_homePage_screen_init(){
 
 
 /**ui_cameraBtn **/
-	lv_obj_t * ui_cameraBtn = lv_obj_create(ui_homePage);
+	lv_obj_t * ui_cameraBtn = lv_obj_create(row1);
 	lv_obj_clear_flag( ui_cameraBtn, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
 	lv_obj_set_flex_flow(ui_cameraBtn,LV_FLEX_FLOW_COLUMN);
 	lv_obj_set_flex_align(ui_cameraBtn, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -202,7 +236,7 @@ void ui_homePage_screen_init(){
 
 	/**ui_albumBtn **/
 
-	lv_obj_t * ui_albumBtn = lv_obj_create(ui_homePage);
+	lv_obj_t * ui_albumBtn = lv_obj_create(row2);
 	lv_obj_clear_flag( ui_albumBtn, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
 	lv_obj_set_flex_flow(ui_albumBtn,LV_FLEX_FLOW_COLUMN);
 	lv_obj_set_flex_align(ui_albumBtn, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
@@ -222,7 +256,41 @@ void ui_homePage_screen_init(){
 	user_pagebtn_list[2].pagebtn=albumPage_btn;
 	user_pagebtn_list[2].nimg=ui_imgset_iconHomePlayer[0];
 	user_pagebtn_list[2].bimg=ui_imgset_iconHomePlayer[1];
+	
 
+	/**ui_settBtn - 设置图标按钮**/
+    lv_obj_t * ui_settBtn = lv_obj_create(row2);
+    lv_obj_clear_flag( ui_settBtn, LV_OBJ_FLAG_SCROLLABLE );    ///Flags
+    lv_obj_set_flex_flow(ui_settBtn,LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(ui_settBtn, LV_FLEX_ALIGN_SPACE_BETWEEN,LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_add_style(ui_settBtn, &pageBtnStyle, 0);
+    
+    lv_obj_t *ui_settImg = lv_obj_create(ui_settBtn);
+    lv_obj_add_style(ui_settImg, &btnImgStyle, 0);
+    lv_obj_set_style_bg_img_src( ui_settImg,ui_imgset_iconHomeMenu[0], LV_PART_MAIN | LV_STATE_DEFAULT );
+    
+    lv_obj_t *ui_settText = lv_label_create(ui_settBtn);
+    lv_obj_add_style(ui_settText, &btnTextStyle, 0);
+    lv_label_set_text(ui_settText, (const char*)ui_language_switch[camSetParam.languageType][SETTING_STR]); //使用多语言
+    
+    settPage_btn = ui_settImg;    // 连接到全局变量
+    lv_obj_add_event_cb(settPage_btn, event_handler, LV_EVENT_ALL,NULL);
+    lv_group_add_obj(home_group, settPage_btn);
+    
+    // 添加到主界面图标数组 (第4个图标，index=3)
+    user_pagebtn_list[3].pagebtn=settPage_btn;
+    user_pagebtn_list[3].nimg=ui_imgset_iconHomeMenu[0];  //普通状态
+    user_pagebtn_list[3].bimg=ui_imgset_iconHomeMenu[1];  //高亮状态
+	
+	// 顶部状态栏部分
+	// 电池图标直接挂到 screen 上
+    ui_homeBatImg = lv_img_create(lv_scr_act());
+    lv_img_set_src(ui_homeBatImg, ui_imgset_iconBat[get_batlevel()]);
+    lv_obj_set_width(ui_homeBatImg, LV_SIZE_CONTENT);
+    lv_obj_set_height(ui_homeBatImg, LV_SIZE_CONTENT);
+    lv_obj_set_align(ui_homeBatImg, LV_ALIGN_TOP_RIGHT);  // 真正的屏幕右上角
+    lv_obj_set_pos(ui_homeBatImg, -5, 5); // 根据屏幕分辨率微调一点点
+    lv_obj_move_foreground(ui_homeBatImg);
 	
 	camera_gvar.immediately_reflash_flag=1;
 

@@ -250,10 +250,10 @@ static uint32_t self_key(uint32_t val)
 		{
 			switch(val>>8)
 			{
-				case AD_UP:
+				case AD_VOL_UP:
 					key_ret = LV_KEY_PREV;
 				break;
-				case AD_DOWN:
+				case AD_VOL_DOWN:
 					key_ret = LV_KEY_NEXT;
 				break;
 				case AD_LEFT:
@@ -262,14 +262,14 @@ static uint32_t self_key(uint32_t val)
 				case AD_RIGHT:
 					key_ret = 'd';
 				break;
-                case AD_A:
-                    key_ret = 'q';
-                break;
-                case AD_B:
-                    key_ret = 'e';
-                break;
 				case AD_PRESS:
 					key_ret = LV_KEY_ENTER;
+				break;
+				case KEY_CALL:     // 发射键替代AD_A功能
+					key_ret = 'q';
+				break;
+				case KEY_STICKER:  // 贴纸键替代AD_B功能
+					key_ret = 'e';
 				break;
 
 

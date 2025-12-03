@@ -241,7 +241,7 @@ extern void audio_adc_unmute(void);
 
 uint32_t intercom_push_key2(struct key_callback_list_s *callback_list,uint32_t keyvalue,uint32_t extern_value)
 {
-	if( (keyvalue>>8) != AD_SPEACH)
+	if( (keyvalue>>8) != KEY_CALL)
 		return 0;
 	uint32 key_val = (keyvalue & 0xff);
 	if((key_val == KEY_EVENT_DOWN) || (key_val == KEY_EVENT_LDOWN) || (key_val == KEY_EVENT_REPEAT)) {

@@ -36,5 +36,4 @@ struct adkey_scan_code
 };
 
 key_channel_t adkey_key;
-key_channel_t adkey_key2;
 #endif

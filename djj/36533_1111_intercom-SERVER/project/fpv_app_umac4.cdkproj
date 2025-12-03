@@ -2180,7 +2180,9 @@ Board: txw81x
             <File Name="../sdk/lib/bus/iic/sensor/sensor_ov7660.c">
               <FileOption/>
             </File>
-            <File Name="../sdk/lib/bus/iic/sensor/sensor_bf20a6.c"/>
+            <File Name="../sdk/lib/bus/iic/sensor/sensor_bf20a6.c">
+              <FileOption/>
+            </File>
           </VirtualDirectory>
           <VirtualDirectory Name="gsensor">
             <File Name="../sdk/lib/bus/iic/gsensor/da280.c">
@@ -4842,41 +4844,6 @@ Board: txw81x
           <FileOption/>
         </File>
       </VirtualDirectory>
-      <VirtualDirectory Name="key">
-        <File Name="../sdk/lib/key/adkey.c">
-          <FileOption/>
-        </File>
-        <File Name="../sdk/lib/key/adkey.h">
-          <FileOption/>
-        </File>
-        <File Name="../sdk/lib/key/keyScan.c">
-          <FileOption/>
-        </File>
-        <File Name="../sdk/lib/key/keyScan.h">
-          <FileOption/>
-        </File>
-        <File Name="../sdk/lib/key/keyWork.c">
-          <FileOption/>
-        </File>
-        <File Name="../sdk/lib/key/keyWork.h">
-          <FileOption/>
-        </File>
-        <File Name="../sdk/lib/key/power_checkkey.c">
-          <FileOption/>
-        </File>
-        <File Name="../sdk/lib/key/power_checkkey.h">
-          <FileOption/>
-        </File>
-        <File Name="../sdk/lib/key/adkey2.c">
-          <FileOption/>
-        </File>
-        <File Name="../sdk/lib/key/battery.c">
-          <FileOption/>
-        </File>
-        <File Name="../sdk/lib/key/battery.h">
-          <FileOption/>
-        </File>
-      </VirtualDirectory>
       <VirtualDirectory Name="flashdisk">
         <File Name="../sdk/lib/flashdisk/flashdisk.c">
           <FileOption/>
@@ -6724,13 +6691,45 @@ Board: txw81x
           <File Name="../sdk/lib/fly_gui/screens/ui_intercomPage.c">
             <FileOption/>
           </File>
-          <File Name="../sdk/lib/fly_gui/screens/ui_albumPage.c" ExcludeProjConfig="FLASH">
+          <File Name="../sdk/lib/fly_gui/screens/ui_albumPage.c" ExcludeProjConfig="">
             <FileOption/>
           </File>
-          <File Name="../sdk/lib/fly_gui/screens/ui_cameraPage.c" ExcludeProjConfig="FLASH">
+          <File Name="../sdk/lib/fly_gui/screens/ui_cameraPage.c" ExcludeProjConfig="">
             <FileOption/>
           </File>
         </VirtualDirectory>
+      </VirtualDirectory>
+      <VirtualDirectory Name="key">
+        <File Name="../sdk/lib/key/adkey.c">
+          <FileOption/>
+        </File>
+        <File Name="../sdk/lib/key/adkey.h">
+          <FileOption/>
+        </File>
+        <File Name="../sdk/lib/key/battery.c">
+          <FileOption/>
+        </File>
+        <File Name="../sdk/lib/key/battery.h">
+          <FileOption/>
+        </File>
+        <File Name="../sdk/lib/key/iokey.c">
+          <FileOption/>
+        </File>
+        <File Name="../sdk/lib/key/iokey.h">
+          <FileOption/>
+        </File>
+        <File Name="../sdk/lib/key/keyScan.c">
+          <FileOption/>
+        </File>
+        <File Name="../sdk/lib/key/keyScan.h">
+          <FileOption/>
+        </File>
+        <File Name="../sdk/lib/key/keyWork.c">
+          <FileOption/>
+        </File>
+        <File Name="../sdk/lib/key/keyWork.h">
+          <FileOption/>
+        </File>
       </VirtualDirectory>
     </VirtualDirectory>
     <VirtualDirectory Name="osal">
@@ -8600,7 +8599,6 @@ Board: txw81x
         <AllWarn>yes</AllWarn>
         <WarnErr>no</WarnErr>
         <OneElfS>yes</OneElfS>
-        <OneElfSPerData>no</OneElfSPerData>
         <Fstrict>no</Fstrict>
       </Compiler>
       <Asm>
@@ -8668,7 +8666,6 @@ Board: txw81x
           <OpenOCDTclPortEnable>no</OpenOCDTclPortEnable>
           <OpenOCDTclPort>6666</OpenOCDTclPort>
           <OpenOCDConfigOptions/>
-          <OpenOCDTimeout>5000</OpenOCDTimeout>
         </ConfigOpenOCD>
       </Debug>
       <Flash>

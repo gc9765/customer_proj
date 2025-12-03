@@ -62,15 +62,17 @@ typedef struct
 user_cfg_info flycfg_info;
 
 
-
+// ui旋转角度
 #ifdef FLY_DEMO_4KEY_VERSION
 #define VEDIO_LAYER_ROTATE	LCD_ROTATE_270
 #else
 #define VEDIO_LAYER_ROTATE	LCD_ROTATE_90//LCD_ROTATE_90  //LCD_ROTATE_270
 #endif
 
+// 状态机
+// camera_global_t 包括当前/上一页面、各类动画计数、自动关机计数、欢迎界面次数、配对超时、pair_success等
 camera_global_t camera_gvar;
-cam_set_t camSetParam;
+cam_set_t camSetParam;   //用户设置（音量、语言、拍照分辨率之类）。
 
 uint32_t USER_KEY_EVENT = 0;
 
@@ -82,7 +84,7 @@ void invisible_setting_submenu0(void);
 void back_settMenu(void);
 
 
-/*key group*/
+/*key group 用于键盘/按键焦点管理*/
 lv_group_t * group_cur =NULL;
 lv_group_t * home_group;
 lv_group_t * rec_group;
@@ -114,6 +116,7 @@ lv_obj_t * gamePage_btn;
 lv_obj_t * musicPage_btn;
 lv_obj_t * label_rec;
 USR_PAGE_BTN user_pagebtn_list[6];
+lv_obj_t * ui_homeBatImg; 
 
 /*videoPage objects*/
 lv_obj_t *ui_videoPage;
@@ -158,7 +161,7 @@ lv_obj_t *ui_photoQualityLabel;
 lv_obj_t *ui_focusBtn;
 lv_obj_t *ui_focusImg;
 
-#if 0
+#if 1
 /*settingPage objects */
 lv_obj_t *ui_settingPage;
 lv_obj_t *ui_settNextBtn;
@@ -305,21 +308,21 @@ const lv_img_dsc_t *ui_imgset_iconHomePlayer[2] = {&iconHomePlayer0,&iconHomePla
 
 
 
-
+// 两帧 VGA（640x480） YUV(或类似) 缓冲区，放在外部 PSRAM
 uint8_t vga_room[2][640*480+640*480/2]__attribute__ ((aligned(4),section(".psram.src")));
-
+// jpg解码缓冲区50k，放在外部 PSRAM
 uint8_t jpg_psram_mem[50*1024] __attribute__ ((aligned(4),section(".psram.src")));
 
 
 
-
+//清零 h/m/s，录制时间用
 void lv_time_reset(struct lv_time *time_now){
 	time_now->lv_hour = 0;
 	time_now->lv_min  = 0;
 	time_now->lv_sec  = 0;
 }
 
-
+// 每秒调用一次，秒++，进位到分和小时，小时最大 99，再归零
 void lv_time_add(struct lv_time *time_now){
 	if(time_now->lv_sec == 59){
 		if(time_now->lv_min == 59){
@@ -341,7 +344,7 @@ void lv_time_add(struct lv_time *time_now){
 	}
 }
 
-
+// 把时间格式化到字符串里，然后 lv_label_set_text 显示到 label 上。
 void lv_time_display(lv_obj_t * p_label,struct lv_time *time_now,char *recolor_val){
 	static char time_str[20];
 	printf("%02d:%02d:%02d\r\n",time_now->lv_hour,time_now->lv_min,time_now->lv_sec);
@@ -367,7 +370,8 @@ void lv_clock_display(lv_obj_t * p_label, user_clock_t *rtc,char *recolor_val){
 }
 
 
-#if 1
+#if 0
+// 摄像头页面 DV 图标开关
 void dv_flash_onoff(uint8_t flag)
 {
 	if(flag)
@@ -376,7 +380,7 @@ void dv_flash_onoff(uint8_t flag)
 		lv_obj_add_flag(ui_DvIconImg, LV_OBJ_FLAG_HIDDEN); 
 
 }
-
+// 根据 flash 切换 DV 图标为红/白，用于录制闪烁效果。
 void rec_dv_flash(uint8_t flash){
 
 		if(flash == 1)
@@ -390,7 +394,7 @@ void rec_dv_flash(uint8_t flash){
 
 
 extern uint8_t osd_menu565_buf[SCALE_HIGH*SCALE_WIDTH*2];
-
+// 电源关闭页面事件处理函数
 void ui_event_poweroffPage(lv_event_t * e){
 
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -404,10 +408,10 @@ void ui_event_poweroffPage(lv_event_t * e){
     {
 		switch(*key_val)
 		{
-			case AD_UP:
+			case AD_LEFT:
 			break;
 
-			case AD_DOWN:
+			case AD_RIGHT:
 			break;
 
 			case AD_PRESS:
@@ -433,6 +437,7 @@ void ui_event_poweroffPage(lv_event_t * e){
 	
 }
 
+// 通用事件处理函数，所有页面的根对象都注册同一个事件处理函数，根据当前页面做不同处理。
 void event_handler(lv_event_t * e)
 {
 	lv_event_code_t code = lv_event_get_code(e);
@@ -488,11 +493,13 @@ void event_handler(lv_event_t * e)
 }
 
 
-
+// 电池状态图标处理函数
 void batteryStatusProcess(void)
 {
 	uint8_t bt_status=get_batlevel();
-	 if(camera_gvar.page_cur == PAGE_INTERCOM)//photo
+	if(camera_gvar.page_cur == PAGE_HOME)  // ⭐ 添加主界面处理
+          lv_img_set_src(ui_homeBatImg, ui_imgset_iconBat[bt_status]);
+	else if(camera_gvar.page_cur == PAGE_INTERCOM)//photo
 		lv_img_set_src(ui_intercomBatImg, ui_imgset_iconBat[bt_status]);
 	// else if(camera_gvar.page_cur == PAGE_CAMERA)//photo
 	// 	lv_img_set_src(ui_camBatImg, ui_imgset_iconBat[bt_status]);
@@ -508,7 +515,7 @@ void batteryStatusProcess(void)
 	// 	lv_img_set_src(ui_musicBatImg, ui_imgset_iconBat[bt_status]);
 
 }
-
+// SD卡状态滤波处理函数
 static uint8_t status_filter(uint8_t status)
 {
     static uint8_t used_status = 3;
@@ -527,7 +534,7 @@ static uint8_t status_filter(uint8_t status)
     return used_status;
 }
 
-
+// SD卡状态图标处理函数
 void sdcStatusProcess(void)
 {
 	uint8_t sd_status ;
@@ -592,6 +599,7 @@ void sdcStatusProcess(void)
 
 }
 
+// 主界面图标闪烁处理函数
 void homePageIconFlash(void) //主界面 图标闪烁
 {
 	static uint8_t flash =0;
@@ -622,7 +630,7 @@ void homePageIconFlash(void) //主界面 图标闪烁
 				flash ^=1;
 				if(flash)
 				{ 
-					for(i=0;i<1;i++)   //主界面 按键个数 ；
+					for(i=0;i<4;i++)   //主界面 按键个数 ；
 					{
 						if(camera_gvar.pagebtn_index ==i)
 							lv_obj_set_style_bg_img_src(user_pagebtn_list[i].pagebtn, user_pagebtn_list[i].bimg, LV_PART_MAIN | LV_STATE_DEFAULT );
@@ -633,7 +641,7 @@ void homePageIconFlash(void) //主界面 图标闪烁
 				}
 				else
 				{
-					for(i=0;i<1;i++)  //主界面 按键个数 ；
+					for(i=0;i<4;i++)  //主界面 按键个数 ；
 					{
 						lv_obj_set_style_bg_img_src(user_pagebtn_list[i].pagebtn, user_pagebtn_list[i].nimg, LV_PART_MAIN | LV_STATE_DEFAULT );
 					}
@@ -644,7 +652,7 @@ void homePageIconFlash(void) //主界面 图标闪烁
 }
 
 #if 0
-
+// 摄像头页面 DVP/VPP 重置函数
 void dvp_vpp_reset()
 {
 	uint32 mj1_on,mj0_on;
@@ -671,7 +679,7 @@ void dvp_vpp_reset()
 
 }
 #endif
-
+// 拍照动画开始函数
 void takePhotoAnimationStart(void)
 {
 	if((camera_gvar.page_cur==PAGE_INTERCOM)||(camera_gvar.page_cur==PAGE_CAMERA))  //camera page
@@ -685,6 +693,7 @@ void takePhotoAnimationStart(void)
 		camera_gvar.shot_anim_times =8;
 	}
 }
+// 拍照动画处理函数
 void takePhotoAnimationProcess(struct vpp_device * devs)
 {
 	if((camera_gvar.page_cur==PAGE_INTERCOM)||(camera_gvar.page_cur==PAGE_CAMERA))  //camera page
@@ -731,7 +740,7 @@ void takePhotoAnimationProcess(struct vpp_device * devs)
 		}
 	}
 }
-
+// 下一页按钮按下动画开始函数
 void nextp_AnimationStart(void)
 {
 	if(camera_gvar.nextp_anim_times==0)
@@ -754,6 +763,7 @@ void nextp_AnimationStart(void)
 	}
 
 }
+// 上一页按钮按下动画开始函数	
 void prevp_AnimationStart(void)
 {
 		if(camera_gvar.prevp_anim_times ==0)
@@ -776,7 +786,7 @@ void prevp_AnimationStart(void)
 		}
 }
 
-
+// 下一页/上一页按钮按下动画处理函数
 void nextprev_PressAnimationProcess(void)
 {
 		if(camera_gvar.nextp_anim_times)
@@ -809,7 +819,7 @@ void nextprev_PressAnimationProcess(void)
 		}
 }
 
-	
+// 日期时间显示处理函数
 void date_time_display(void)
 {
 	// if(camera_gvar.page_cur == PAGE_VIDEO)
@@ -822,12 +832,14 @@ void date_time_display(void)
 	// 	lv_clock_display(ui_sTimeIconLabel,&sw_rtc,NULL);
 }
 
+// WiFi 连接状态获取函数
 extern struct system_status sys_status;
 uint8_t get_wifi_connect_flag(void)
 {
 	return sys_status.wifi_connected;
 }
 
+// WiFi 连接状态处理函数
 void wifi_connect_process(void)
 {
 		
@@ -866,6 +878,7 @@ void display_msg(uint32 rx_speed,uint32 tx_speed,uint32 lcd_num,uint32 id){
 }
 #endif
 
+// 魔音类型名称数组
 const char *voice_name[] = {
         "normal",
 		"alien",
@@ -876,6 +889,7 @@ const char *voice_name[] = {
     };
 
 extern uint8_t sundtype;
+// 魔音类型显示处理函数
 void display_magicsoud_type(void)
 {
 #ifdef BABY_UI_MAGICSOUND
@@ -889,7 +903,7 @@ void display_magicsoud_type(void)
 #endif
 }
 
-
+// 对讲页面 WiFi 断开处理函数
 void intercom_wifi(void)
 {
 	
@@ -966,6 +980,8 @@ void intercom_wifi(void)
 // 	}
 	
 // }
+
+// 音量条渲染函数
  void render_vol_level(uint8_t vol)
 {
 
@@ -991,7 +1007,7 @@ void intercom_wifi(void)
 			lv_obj_set_style_bg_color(ui_volumeLevels[i], lv_color_hex(0x6D6C6C), LV_PART_MAIN | LV_STATE_DEFAULT );
 	}
 }
-
+// 音量条显示动画开始函数
 void volDisAnimationStart(void)
 {
 	if((camera_gvar.page_cur==PAGE_INTERCOM)||(camera_gvar.page_cur==PAGE_ALBUM)) //camera page
@@ -1003,7 +1019,7 @@ void volDisAnimationStart(void)
 		camera_gvar.volume_anim_times =5;
 	}
 }
-
+// 音量条显示动画处理函数
 void volDisplayProcess(void)
 {
 	if((camera_gvar.page_cur==PAGE_INTERCOM)||(camera_gvar.page_cur==PAGE_ALBUM)) //camera page
@@ -1022,7 +1038,7 @@ void volDisplayProcess(void)
 	}
 	
 }
-
+// 信号强度显示处理函数
 void signalDisplayProcess(void)
 {
 	int32_t signal_strength=-100;
@@ -1073,6 +1089,7 @@ void signalDisplayProcess(void)
 }
 
 uint8 conncet_flag;
+// 配对开始函数
 void userPairStart(void)
 {
 
@@ -1092,12 +1109,13 @@ void userPairStart(void)
 		lv_obj_clear_flag( ui_pairPanel, LV_OBJ_FLAG_HIDDEN );   /// Flags
 	}
 }
-
+// 配对停止函数
 void userPairstop(void)
 {
 	printf(" ## userPairStop \n");
 	set_pair_mode(0);
 }
+// 配对成功函数
 void userPairSuccess(void)
 {
 	printf(" ## userPairSuccess \n");
@@ -1150,7 +1168,7 @@ void userPairSuccess(void)
 
 
 
-
+// 配对显示处理函数
 void pairDisplayProcess(void)
 {
 	if(camera_gvar.page_cur==PAGE_INTERCOM) //intercom page
@@ -1220,7 +1238,7 @@ void pairDisplayProcess(void)
 
 
 
-	
+// 自动关机时间设置函数
 void set_autoPowerOff_times(uint16_t tm)
 {
 #ifdef AUTO_POWER_OFF_ENABLE
@@ -1246,10 +1264,12 @@ void autoPowerOff_process(void)
 #endif
 }
 
+// 延时开屏处理函数
 extern void delay_open_lcd_process(void);
 
 uint8_t photo_flag;
 extern uint8 pcm_flag ;
+// 定时器事件处理函数
 void timer_event(){
 	static uint8_t half_flash =0;
 	static uint8_t rec_num = 1;
@@ -1264,7 +1284,7 @@ void timer_event(){
 
 	// takePhotoAnimationProcess(vpp_dev); 
 	// nextprev_PressAnimationProcess();
-	// homePageIconFlash();  // //主界面 图标闪烁
+	 homePageIconFlash();  // //主界面 图标闪烁
 
 	if(photo_flag)  // 配对后 检测对方是否退出
 	{
@@ -1273,7 +1293,7 @@ void timer_event(){
 		intercom_wifi(); //intercom状态
 	}
 
-	delay_open_lcd_process();
+	delay_open_lcd_process(); //延时开屏处理函数
 
 
 
@@ -1288,7 +1308,7 @@ void timer_event(){
 			updata = pcm_flag;
 			if(updata)
 			{
-				lv_obj_clear_flag( mic_img, LV_OBJ_FLAG_HIDDEN );   
+				lv_obj_clear_flag( mic_img, LV_OBJ_FLAG_HIDDEN );    //
 			}else{
    				lv_obj_add_flag(mic_img, LV_OBJ_FLAG_HIDDEN);
 			}
@@ -1448,11 +1468,13 @@ void timer_event(){
 // 	timer_count++;
 // }
 
+// 定时器创建函数
 void lv_time_set(){
 	static uint32_t user_data = 10;
 	lv_timer_create(timer_event, 100,  &user_data);
 }
 
+// 进入深度睡眠函数
 void goto_dsleep(void)
 {
 	os_printf("#### goto_dsleep \n");
@@ -1471,6 +1493,8 @@ void goto_dsleep(void)
     system_sleep(SYSTEM_SLEEP_TYPE_RTCC, &sleep_args);
 
 }
+
+// 开机菜单页面配置函数
 void lv_page_poweron_menu_config()
 {
 	static lv_style_t poweonMenuStyle;
@@ -1496,6 +1520,7 @@ void lv_page_poweron_menu_config()
 	backlight_on();
 }
 
+// 关闭ADC函数
 void usr_close_adc()
 {
 	struct hgadc_v0* hgadc_tm;
@@ -1505,6 +1530,7 @@ void usr_close_adc()
 	adc_delete_channel((struct adc_device *)(hgadc_tm),BAT_ADC_IO);
 
 }
+// 关机菜单页面配置函数
 void lv_page_poweroff_menu_config()
 {
 	static lv_style_t poweoffMenuStyle;
@@ -1545,7 +1571,7 @@ void lv_page_poweroff_menu_config()
 
 
 
-
+// USB页面配置函数
 void lv_page_usb_config(){	
 	static lv_style_t usbPage_style;	
 	lv_style_reset(&usbPage_style);
@@ -1565,7 +1591,7 @@ void lv_page_usb_config(){
 
 
 
-
+// 关机时 power_holdoff() 拉低，外部电源电路切断电源。
 void power_holdoff(void)
 {
 #ifdef POWER_HOLD_PORT
@@ -1574,6 +1600,7 @@ void power_holdoff(void)
 #endif
 }
 
+//上电后 power_hold_init() 拉高保持脚，保证系统不断电
 void power_hold_init(void)
 {
 #ifdef POWER_HOLD_PORT
@@ -1582,12 +1609,14 @@ void power_hold_init(void)
 #endif
 }
 
+// LVGL 事件发送函数
 void lv_user_msg_send(void* key)
 {
 	printf("## lv_user_msg_send \n");
 	lv_event_send(curPage_obj,USER_KEY_EVENT,key);
 } 	
 
+// 注册一个自定义 LVGL 事件 ID，存进 USER_KEY_EVENT
 void lv_page_init(){
 	k_task_handle_t rec_vfx_task_handle;
 
@@ -1596,7 +1625,7 @@ void lv_page_init(){
 	USER_KEY_EVENT=lv_event_register_id();
 }
 
-
+// 系统上电欢迎界面
 void poweron_welcome(void)
 {
 	struct lcdc_device *lcd_dev;
@@ -1634,11 +1663,11 @@ void poweron_welcome(void)
 	lcdc_set_video_en(lcd_dev,1); //1		 close or open vedio background 
 	lv_page_poweron_menu_config();
 	set_autoPowerOff_times(300);
-	camera_gvar.welcome_times =5;
+	camera_gvar.welcome_times =5;          // 欢迎界面显示5个周期
 
 	camera_gvar.pagebtn_index =0;
 	camera_gvar.gametab_index =2;
-	camera_gvar.poweron_nextpage=PAGE_INTERCOM;//PAGE_HOME;//PAGE_CAMERA;//PAGE_INTERCOM;
+	camera_gvar.poweron_nextpage= PAGE_HOME;//PAGE_HOME;//PAGE_CAMERA;//PAGE_INTERCOM;
 	camSetParam.volumeSet =6 ;   //初始 音量设置(0-10);
 	camSetParam.languageType=1;
 	
@@ -1877,7 +1906,7 @@ void lv_page_select(uint8_t page)
 		ui_intercomPage_screen_init();		
 
 	}
-#if 0
+#if 1
 	else if(page == PAGE_CAMERA){
 		#ifdef  P0P1_SWITCH
 			{
@@ -1891,7 +1920,7 @@ void lv_page_select(uint8_t page)
 				bbm_displaydecode_run =0;
 			}
 		#endif
-	#if 0
+	#if 1
 		//lcdc_set_video_en(lcd_dev,0);
 		//vpp_close(vpp_dev);
 		vpp_open(vpp_dev);

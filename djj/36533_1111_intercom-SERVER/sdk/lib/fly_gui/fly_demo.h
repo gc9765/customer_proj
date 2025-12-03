@@ -232,6 +232,7 @@ extern lv_obj_t * settPage_btn;
 extern lv_obj_t * albumPage_btn;
 extern lv_obj_t * gamePage_btn;
 extern lv_obj_t * musicPage_btn;
+extern lv_obj_t * ui_homeBatImg;
 
 extern USR_PAGE_BTN user_pagebtn_list[6];
 
@@ -381,8 +382,8 @@ LV_IMG_DECLARE( iconHomeIntercom1);
 #if 0
 LV_IMG_DECLARE( iconHomeGame0); 
 LV_IMG_DECLARE( iconHomeGame1); 
-LV_IMG_DECLARE( iconHomeMenu0); 
-LV_IMG_DECLARE( iconHomeMenu1); 
+//LV_IMG_DECLARE( iconHomeMenu0); 
+//LV_IMG_DECLARE( iconHomeMenu1); 
 LV_IMG_DECLARE( iconHomeMusic0); 
 LV_IMG_DECLARE( iconHomeMusic1); 
 LV_IMG_DECLARE( iconHomeCamera0); 

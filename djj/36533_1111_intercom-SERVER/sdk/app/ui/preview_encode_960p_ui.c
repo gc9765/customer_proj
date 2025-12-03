@@ -53,10 +53,10 @@ static uint32_t self_key(uint32_t val)
 		{
 			switch(val>>8)
 			{
-				case AD_UP:
+				case AD_VOL_UP:
 					key_ret = 'q';
 				break;
-				case AD_DOWN:
+				case AD_VOL_DOWN:
 					key_ret = 's';
 				break;
 				case AD_LEFT:

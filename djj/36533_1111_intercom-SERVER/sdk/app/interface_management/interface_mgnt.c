@@ -175,36 +175,29 @@ uint32_t key_get_data()
 	uint32_t val = os_msgq_get(&lvgl_key_msgq,0);
 	if(val > 0)
 	{
-		set_autoPowerOff_times(300);
+		//set_autoPowerOff_times(300);
 
 		os_printf("lvgl keyval:%02X\n",val);
 		if((val&0xff) ==   KEY_EVENT_SUP)
 		{
 			switch(val>>8)
 			{
-				case AD_UP:
+				case AD_LEFT:      // 左键 (SW8)
 					key_ret += 2;
 				break;
-				case AD_DOWN:
+				case AD_RIGHT:     // 右键 (SW7)
 					key_ret += 1;
 				break;
-				case AD_LEFT:
+				case AD_VOL_UP:    // 音量+ (SW4)
 					key_ret += 2;
 				break;
-				case AD_RIGHT:
+				case AD_VOL_DOWN:  // 音量- (SW5)
 					key_ret += 1;
 				break;
 				case AD_PRESS:
 					key_ret += 5;
 				break;
-				case AD_A:
-				break;
-				case AD_B:
 
-				break;
-				case AD_C:
-
-				break;
 				default:
 				break;
 			}
@@ -217,7 +210,7 @@ uint32_t key_get_data()
 
 			/*home界面  按建提示音*/ 
 			if((key>KEY_NONE)&&(camera_gvar.page_cur==PAGE_HOME))
-			play_pcmtone(&keytone);
+			play_pcmtone((pcmtone_struct*)&keytone);
 			/*home界面  按建提示音*/ 
 
 			lv_user_msg_send(&key);
@@ -250,7 +243,7 @@ uint32_t key_get_data()
 				lv_user_msg_send(&key);
 				break;
 				
-				case AD_SPEACH:
+				case KEY_CALL:
 				if(camera_gvar.page_cur==PAGE_ALBUM)
 				{
 					key = KEY_FORMAT_SD;

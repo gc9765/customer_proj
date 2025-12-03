@@ -29,7 +29,7 @@
 #include "vpp_ipf_src.h"
 #include "lib/umac/ieee80211.h"
 
-#include "keyScan.h"
+#include "keyScan.h" 
 #include "../lvgl.h"
 #include "ui_language.h"
 #include "fly_demo.h"
@@ -487,7 +487,7 @@ void ui_event_intercomPage(lv_event_t * e){
 	struct dma_device *dma1_dev;
 	uint32_t retval = 0;
 
-	dma1_dev = (struct dma_device *)dev_get(HG_M2MDMA_DEVID); 
+	dma1_dev = (struct dma_device *)dev_get(HG_M2MDMA_DEVID);
 	vpp_dev = (struct vpp_device *)dev_get(HG_VPP_DEVID);
 	scale_dev = (struct scale_device *)dev_get(HG_SCALE1_DEVID);
 
@@ -496,9 +496,9 @@ void ui_event_intercomPage(lv_event_t * e){
 		switch(*key_val)
 		{
 
-			case AD_A:    //魔音
+			case KEY_M:    //魔音
 #ifdef BABY_UI_MAGICSOUND
-			printf("##===AD_A  \n");
+			//printf("##===AD_A  \n");
 			case KEY_MAGIC_SWITCH:
 			{
 				extern magicSound *magic_sound;
@@ -508,7 +508,6 @@ void ui_event_intercomPage(lv_event_t * e){
 					sundtype++;
 					if(sundtype>5)
 						sundtype=0;
-						
 					printf("##===sundtype=%d \n",sundtype);
 					magicSound_set_type(magic_sound,sundtype);
 				}
@@ -541,7 +540,7 @@ void ui_event_intercomPage(lv_event_t * e){
 			}
 			break;
 			
-			case AD_D:
+			case AD_BACK:
 			case KEY_BACK:    //退出对讲
 
 
@@ -564,11 +563,11 @@ void ui_event_intercomPage(lv_event_t * e){
 			ipf_update_flag = 1;			
 			rahmen_open =0;
 			lcd_pair_success = 0;
-			lv_page_select(PAGE_INTERCOM);
+			lv_page_select(PAGE_HOME);
 			break;
 
 
-			case AD_DOWN:        //音量---
+			case AD_VOL_DOWN:        //音量---
 			case KEY_VOL_DOWN:
 			os_printf("## KEY_VOL_DOWN=\n");
 
@@ -582,7 +581,7 @@ void ui_event_intercomPage(lv_event_t * e){
 			os_printf("## cur_volumeSet=%d \n",camSetParam.volumeSet);
 			break;
 
-			case AD_UP:         //音量+++
+			case AD_VOL_UP:         //音量+++
 			case KEY_VOL_UP:
 			os_printf("## KEY_VOL_UP=\n");
 
@@ -596,7 +595,7 @@ void ui_event_intercomPage(lv_event_t * e){
 			os_printf("## cur_volumeSet=%d \n",camSetParam.volumeSet);
 			break;
  
-			case AD_B:             // 大头贴
+			case KEY_STICKER:       // 大头贴
 			case KEY_IPF_SWITCH:   
 			if(camera_gvar.specialeffects_index<RAHMEN_MAX_NUMS)
 			{

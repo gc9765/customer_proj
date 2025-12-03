@@ -14,7 +14,7 @@ djj/**/obj/
 djj/**/bin/
 # IDE
 djj/36533_1111_intercom-SERVER/project/.cdk/
-
+djj/36533_1111_intercom-SERVER/project/backup
 
 
 # -------------------------------
@@ -33,6 +33,10 @@ djj/36533_1111_intercom-SERVER/project/.cdk/
 *.out
 *.s19
 *.srec
+*.mk
+*.bat
+*.cdkproj
+*.cdkws
 
 # Static analysis or temp build files
 *.su

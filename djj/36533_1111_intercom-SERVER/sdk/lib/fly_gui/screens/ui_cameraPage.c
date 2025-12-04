@@ -55,6 +55,8 @@ extern void bbm_stop_record(void);
 extern void client_send_wakeup_cmd(uint8_t cnt);
 extern void client_send_sleep_cmd(uint8_t cnt);
 
+
+
 void doubleSenor_pdn_set(void)
 {
 	gpio_iomap_output(PIN_DVP_PDN1,GPIO_IOMAP_OUTPUT);
@@ -268,57 +270,57 @@ void ui_event_cameraPage(lv_event_t * e){
 			}
 			break;
 			
-			case KEY_RECORD:
-			if(rec_open == 0){
-
-				if(camera_gvar.sd_online==0)
-				{
-					noticeAnimationStart(4);
-					break;
-				}
-				printf("rec start\r\n");
-				#if 0
-				if(gui_cfg.rec_h == gui_cfg.dvp_h){
-					jpg_cfg(HG_JPG0_DEVID,VPP_DATA0);
-				}
-				else{
-					scale_from_vpp_to_jpg(scale_dev,(uint32)yuvbuf,gui_cfg.dvp_w,gui_cfg.dvp_h,gui_cfg.rec_w,gui_cfg.rec_h);
-					jpg_cfg(HG_JPG0_DEVID,SCALER_DATA);
-				}
-				photo_msg.out0_h = gui_cfg.rec_h;
-				photo_msg.out0_w = gui_cfg.rec_w;
-		
-			
-				start_record_thread(30,16);
-				#else
-				if(bbm_start_record())
-				#endif
-				{
-					rec_open = 1;
-					dv_flash_onoff(rec_open);  //start
-					lv_time_reset(&rec_time);
-					lv_time_display(ui_RecTimeIconLabel,&rec_time,"#FF0000");
-					lv_obj_clear_flag(ui_RecTimeIconLabel, LV_OBJ_FLAG_HIDDEN );   /// Flags 
-				}
-				
-			}
-			else{
-				#if 0
-				scale_close(scale_dev);
-				send_stop_record_cmd();
-				#else
-				bbm_stop_record();
-				#endif
-				
-				rec_open = 0;
-				lv_time_reset(&rec_time);
-				lv_time_display(ui_RecTimeIconLabel,&rec_time,NULL);
-				lv_obj_add_flag(ui_RecTimeIconLabel, LV_OBJ_FLAG_HIDDEN); 
-
-				dv_flash_onoff(rec_open); //stop
-
-			}
-			break;
+//			case KEY_RECORD:
+//			if(rec_open == 0){
+//
+//				if(camera_gvar.sd_online==0)
+//				{
+//					noticeAnimationStart(4);
+//					break;
+//				}
+//				printf("rec start\r\n");
+//				#if 0
+//				if(gui_cfg.rec_h == gui_cfg.dvp_h){
+//					jpg_cfg(HG_JPG0_DEVID,VPP_DATA0);
+//				}
+//				else{
+//					scale_from_vpp_to_jpg(scale_dev,(uint32)yuvbuf,gui_cfg.dvp_w,gui_cfg.dvp_h,gui_cfg.rec_w,gui_cfg.rec_h);
+//					jpg_cfg(HG_JPG0_DEVID,SCALER_DATA);
+//				}
+//				photo_msg.out0_h = gui_cfg.rec_h;
+//				photo_msg.out0_w = gui_cfg.rec_w;
+//		
+//			
+//				start_record_thread(30,16);
+//				#else
+//				if(bbm_start_record())
+//				#endif
+//				{
+//					rec_open = 1;
+//					dv_flash_onoff(rec_open);  //start
+//					lv_time_reset(&rec_time);
+//					lv_time_display(ui_RecTimeIconLabel,&rec_time,"#FF0000");
+//					lv_obj_clear_flag(ui_RecTimeIconLabel, LV_OBJ_FLAG_HIDDEN );   /// Flags 
+//				}
+//				
+//			}
+//			else{
+//				#if 0
+//				scale_close(scale_dev);
+//				send_stop_record_cmd();
+//				#else
+//				bbm_stop_record();
+//				#endif
+//				
+//				rec_open = 0;
+//				lv_time_reset(&rec_time);
+//				lv_time_display(ui_RecTimeIconLabel,&rec_time,NULL);
+//				lv_obj_add_flag(ui_RecTimeIconLabel, LV_OBJ_FLAG_HIDDEN); 
+//
+//				dv_flash_onoff(rec_open); //stop
+//
+//			}
+//			break;
 
 
 

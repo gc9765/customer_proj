@@ -46,20 +46,13 @@ int scan_mp3_files(void);
 
 typedef enum _SET_MENU_
 {
-    SETMENU_FORMAT=0,
-    SETMENU_CAMRES,
-    SETMENU_RECRES,
-    SETMENU_VOLUME,
-    SETMENU_DATE,
-    SETMENU_PRINT_M,
-    SETMENU_PRINT_D,
-    SETMENU_LANGUAGE,
-    SETMENU_VERSION,
-    SETMENU_DEFAULT,
-    SETMENU_FREQ,
-    SETMENU_CYC_REC,
-    SETMENU_SCREEN_PR,
-    SETMENU_AUTO_OFF,
+    SETMENU_LANGUAGE=0,    // 语言
+    SETMENU_BRIGHTNESS,    // 亮度
+    SETMENU_SLEEP,         // 睡眠模式
+    SETMENU_SCREEN_SAVER,  // 屏保模式
+    SETMENU_SOUND,         // 声音
+    SETMENU_FORMAT,        // 格式化
+    SETMENU_VERSION,       // 版本信息
     SETMENU_MAX
 }SETMENU;
 
@@ -70,10 +63,11 @@ typedef enum _PAGE_NUM_
     PAGE_INTERCOM,
     PAGE_CAMERA,
     PAGE_ALBUM,
+	PAGE_SET,
     PAGE_VIDEO,
     PAGE_MUSIC,
     PAGE_GAME,
-    PAGE_SET,
+//    PAGE_SET,
     PAGE_PWERON,
     PAGE_USB,
     PAGE_POWEROFF,
@@ -286,7 +280,6 @@ extern lv_obj_t *ui_photoQualityLabel;
 extern lv_obj_t *ui_focusBtn;
 extern lv_obj_t *ui_focusImg;
 
-#if 0
 // SCREEN:ui_settingPage
 void ui_settingPage_screen_init();
 void ui_event_settPage( lv_event_t * e);
@@ -310,7 +303,6 @@ extern lv_obj_t *ui_gamePrevBtn;
 extern lv_obj_t *ui_gameNextBtn;
 extern lv_obj_t *ui_gameBatImg;
 extern lv_obj_t *ui_game_opview;
-#endif
 extern lv_obj_t * ui_dialogPanel; 
 extern lv_obj_t * ui_dialogContent;
 
@@ -379,51 +371,39 @@ LV_IMG_DECLARE( iconHomePlayer1);
 LV_IMG_DECLARE( iconHomeIntercom0); 
 LV_IMG_DECLARE( iconHomeIntercom1); 
 
-#if 0
-LV_IMG_DECLARE( iconHomeGame0); 
-LV_IMG_DECLARE( iconHomeGame1); 
-//LV_IMG_DECLARE( iconHomeMenu0); 
-//LV_IMG_DECLARE( iconHomeMenu1); 
-LV_IMG_DECLARE( iconHomeMusic0); 
-LV_IMG_DECLARE( iconHomeMusic1); 
-LV_IMG_DECLARE( iconHomeCamera0); 
-LV_IMG_DECLARE( iconHomeCamera1); 
-LV_IMG_DECLARE( iconHomePlayer0); 
-LV_IMG_DECLARE( iconHomePlayer1); 
-LV_IMG_DECLARE( iconHomeVideo0); 
-LV_IMG_DECLARE( iconHomeVideo1); 
+LV_IMG_DECLARE( iconHomeGame0);
+LV_IMG_DECLARE( iconHomeGame1);
+LV_IMG_DECLARE( iconHomeMusic0);
+LV_IMG_DECLARE( iconHomeMusic1);
 
+LV_IMG_DECLARE( iconMenuFormat);
+LV_IMG_DECLARE( iconMenuPres);
+LV_IMG_DECLARE( iconMenuVres);
+LV_IMG_DECLARE( iconMenuVolume);
+LV_IMG_DECLARE( iconMenuDate);
+LV_IMG_DECLARE( iconMenuPrintSel);
+LV_IMG_DECLARE( iconMenuPstramp);
+LV_IMG_DECLARE( iconMenuLanguage);
+LV_IMG_DECLARE( iconMenuVersion);
+LV_IMG_DECLARE( iconMenuSd);
+// LV_IMG_DECLARE( iconMenuHz);        // 不存在，使用iconMenuPres替代
+LV_IMG_DECLARE( iconMenuRec);
+LV_IMG_DECLARE( iconMenuPoff);
+LV_IMG_DECLARE( iconMenuSoff);
 
-LV_IMG_DECLARE( iconMenuFormat); 
-LV_IMG_DECLARE( iconMenuPres); 
-LV_IMG_DECLARE( iconMenuVres); 
-LV_IMG_DECLARE( iconMenuVolume); 
-LV_IMG_DECLARE( iconMenuDate); 
-LV_IMG_DECLARE( iconMenuPrintSel); 
-LV_IMG_DECLARE( iconMenuPstramp); 
-LV_IMG_DECLARE( iconMenuLanguage); 
-LV_IMG_DECLARE( iconMenuVersion); 
-LV_IMG_DECLARE( iconMenuSd); 
-LV_IMG_DECLARE( iconMenuHz); 
-LV_IMG_DECLARE( iconMenuRec); 
-LV_IMG_DECLARE( iconMenuPoff); 
-LV_IMG_DECLARE( iconMenuSoff); 
-
-LV_IMG_DECLARE( iconMenuFormat1); 
-LV_IMG_DECLARE( iconMenuPres1); 
-LV_IMG_DECLARE( iconMenuVres1); 
-//LV_IMG_DECLARE( iconMenuVolume1); 
-LV_IMG_DECLARE( iconMenuDate1); 
-LV_IMG_DECLARE( iconMenuPrintSel1); 
-LV_IMG_DECLARE( iconMenuPstramp1); 
-LV_IMG_DECLARE( iconMenuLanguage1); 
-LV_IMG_DECLARE( iconMenuVersion1); 
-LV_IMG_DECLARE( iconMenuSd1); 
-LV_IMG_DECLARE( iconMenuHz1); 
-LV_IMG_DECLARE( iconLoop); 
-LV_IMG_DECLARE( iconMenuPoff1); 
-LV_IMG_DECLARE( iconMenuSoff1); 
-#endif
+LV_IMG_DECLARE( iconMenuFormat1);
+LV_IMG_DECLARE( iconMenuPres1);
+LV_IMG_DECLARE( iconMenuVres1);
+LV_IMG_DECLARE( iconMenuDate1);
+LV_IMG_DECLARE( iconMenuPrintSel1);
+LV_IMG_DECLARE( iconMenuPstramp1);
+LV_IMG_DECLARE( iconMenuLanguage1);
+LV_IMG_DECLARE( iconMenuVersion1);
+LV_IMG_DECLARE( iconMenuSd1);
+// LV_IMG_DECLARE( iconMenuHz1);       // 不存在，使用iconMenuPres1替代
+LV_IMG_DECLARE( iconLoop);
+LV_IMG_DECLARE( iconMenuPoff1);
+LV_IMG_DECLARE( iconMenuSoff1);
 LV_IMG_DECLARE( iconMenuVolume1); 
 
 LV_IMG_DECLARE( iconPrevP); 
@@ -465,9 +445,10 @@ LV_IMG_DECLARE(intercom_bglogo);
 
 LV_FONT_DECLARE( ui_font_alimamaShuHei16);
 LV_FONT_DECLARE( simplch_light);
+LV_FONT_DECLARE( lv_font_simsun_16_cjk );  // 更完整的中文字体
 LV_FONT_DECLARE( alifangyuan16);
 LV_FONT_DECLARE( alifangyuan28);
-//LV_FONT_DECLARE( alifangyuan18);
+LV_FONT_DECLARE( alifangyuan18);
 
 
 extern const lv_img_dsc_t *ui_imgset_iconBat[];

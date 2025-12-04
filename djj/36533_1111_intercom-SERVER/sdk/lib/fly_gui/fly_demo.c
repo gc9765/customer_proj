@@ -306,6 +306,17 @@ const lv_img_dsc_t *ui_imgset_iconHomeCamera[2] = {&iconHomeCamera0,&iconHomeCam
 const lv_img_dsc_t *ui_imgset_iconHomeMenu[2] = {&iconHomeMenu0,&iconHomeMenu1};
 const lv_img_dsc_t *ui_imgset_iconHomePlayer[2] = {&iconHomePlayer0,&iconHomePlayer1};
 
+// //设置页面图标数组定义
+//const lv_img_dsc_t *ui_imgset_iconSettSubImgs[] = {
+//    &iconMenuLanguage,    言
+//    &iconMenuVolume,       亮度 (使用音量图标替代)
+//    &iconMenuPoff,         睡眠模式 (使用关机图标替代)
+//    &iconMenuSoff,         屏保模式
+//    &iconMenuVolume,       声音
+//    &iconMenuFormat,       格式化
+//    &iconMenuVersion       版本信息
+//};
+
 
 
 // 两帧 VGA（640x480） YUV(或类似) 缓冲区，放在外部 PSRAM
@@ -370,7 +381,7 @@ void lv_clock_display(lv_obj_t * p_label, user_clock_t *rtc,char *recolor_val){
 }
 
 
-#if 0
+#if 1
 // 摄像头页面 DV 图标开关
 void dv_flash_onoff(uint8_t flag)
 {
@@ -459,20 +470,20 @@ void event_handler(lv_event_t * e)
 		}
 		else if(camera_gvar.page_cur == PAGE_INTERCOM){
 			ui_event_intercomPage(e);
-		}
-#if 0	
+		}	
 		else if(camera_gvar.page_cur == PAGE_CAMERA){
 			ui_event_cameraPage(e);
 		}
+		else if(camera_gvar.page_cur == PAGE_SET){
+			ui_event_settPage(e);
+		}
+
 		else if(camera_gvar.page_cur == PAGE_ALBUM){
 			ui_event_albumPage(e);
 		}
-	
+#if 0
 		else if(camera_gvar.page_cur == PAGE_VIDEO){
 			ui_event_recPage(e);
-		}
-		else if(camera_gvar.page_cur == PAGE_SET){
-			ui_event_settPage(e);
 		}
 
 		else if(camera_gvar.page_cur == PAGE_GAME){
@@ -563,16 +574,16 @@ void sdcStatusProcess(void)
 
 		if(camera_gvar.page_cur == PAGE_INTERCOM)//photo
 			lv_obj_clear_flag( ui_isdIconImg, LV_OBJ_FLAG_HIDDEN );   /// Flags 
-		// else if(camera_gvar.page_cur == PAGE_CAMERA)//photo
-		// 	lv_obj_clear_flag( ui_csdIconImg, LV_OBJ_FLAG_HIDDEN );   /// Flags 
-		// else if(camera_gvar.page_cur == PAGE_ALBUM)//playback
-		// 	lv_obj_clear_flag( ui_aSdIconImg, LV_OBJ_FLAG_HIDDEN );   /// Flags 
+		 else if(camera_gvar.page_cur == PAGE_CAMERA)//photo
+		 	lv_obj_clear_flag( ui_csdIconImg, LV_OBJ_FLAG_HIDDEN );   /// Flags 
+		 else if(camera_gvar.page_cur == PAGE_ALBUM)//playback
+		 	lv_obj_clear_flag( ui_aSdIconImg, LV_OBJ_FLAG_HIDDEN );   /// Flags 
 		// else if(camera_gvar.page_cur == PAGE_VIDEO)//rec
 		// 	lv_obj_clear_flag( ui_vsdIconImg, LV_OBJ_FLAG_HIDDEN );   /// Flags 
 		// else if(camera_gvar.page_cur == PAGE_MUSIC)//music
 		// 	lv_obj_clear_flag( ui_msdIconImg, LV_OBJ_FLAG_HIDDEN );    /// Flags
-		//else if(camera_gvar.page_cur == PAGE_SET)//sett
-		//lv_obj_clear_flag(ui_settBatImg, ui_imgset_iconBat[bt_status]);
+		else if(camera_gvar.page_cur == PAGE_SET)//sett
+		lv_obj_clear_flag(ui_settBatImg, ui_imgset_iconBat[b_sta]);
 		//else if(camera_gvar.page_cur == PAGE_GAME)//game
 		//lv_obj_clear_flag(ui_gameBatImg, ui_imgset_iconBat[bt_status]);
 
@@ -590,8 +601,8 @@ void sdcStatusProcess(void)
 		// 	lv_obj_add_flag( ui_vsdIconImg, LV_OBJ_FLAG_HIDDEN );   /// Flags 
 		// else if(camera_gvar.page_cur == PAGE_MUSIC)//music
 		// 	lv_obj_add_flag( ui_msdIconImg, LV_OBJ_FLAG_HIDDEN );    /// Flags
-		//else if(camera_gvar.page_cur == PAGE_SET)//sett
-		//lv_obj_clear_flag(ui_settBatImg, ui_imgset_iconBat[bt_status]);
+		else if(camera_gvar.page_cur == PAGE_SET)//sett
+		lv_obj_clear_flag(ui_settBatImg, ui_imgset_iconBat[b_sta]);
 		//else if(camera_gvar.page_cur == PAGE_GAME)//game
 		//lv_obj_clear_flag(ui_gameBatImg, ui_imgset_iconBat[bt_status]);
 
@@ -940,46 +951,46 @@ void intercom_wifi(void)
 	}
 }
 
-// void noticeAnimationStart(uint8_t tm)
-// {
-// 	if((camera_gvar.page_cur==PAGE_INTERCOM)||(camera_gvar.page_cur==PAGE_CAMERA)||(camera_gvar.page_cur==PAGE_ALBUM)) 
-// 	{	
-// 		// visiable shot icon
-// 		lv_obj_clear_flag( ui_dialogPanel, LV_OBJ_FLAG_HIDDEN );   /// Flags
-// 		camera_gvar.notice_anim_times =tm;
-// 		printf(" ## noticeAnimationStart timers=%d\n",camera_gvar.notice_anim_times);
+ void noticeAnimationStart(uint8_t tm)
+ {
+ 	if((camera_gvar.page_cur==PAGE_INTERCOM)||(camera_gvar.page_cur==PAGE_CAMERA)||(camera_gvar.page_cur==PAGE_ALBUM)) 
+ 	{	
+ 		// visiable shot icon
+ 		lv_obj_clear_flag( ui_dialogPanel, LV_OBJ_FLAG_HIDDEN );   /// Flags
+ 		camera_gvar.notice_anim_times =tm;
+ 		//printf(" ## noticeAnimationStart timers=%d\n",camera_gvar.notice_anim_times);
 
-// 	}
-// }
+	}
+ }
 
-// void noticeAnimationStop(void)
-// {
-// 	if((camera_gvar.page_cur==PAGE_INTERCOM)||(camera_gvar.page_cur==PAGE_CAMERA)||(camera_gvar.page_cur==PAGE_ALBUM)) 
-// 	{	
-// 		lv_obj_add_flag( ui_dialogPanel, LV_OBJ_FLAG_HIDDEN );   /// Flags
-// 		camera_gvar.notice_anim_times =0;
-// 		printf(" ## noticeAnimationStop \n");
-// 	}
-// }
+ void noticeAnimationStop(void)
+ {
+ 	if((camera_gvar.page_cur==PAGE_INTERCOM)||(camera_gvar.page_cur==PAGE_CAMERA)||(camera_gvar.page_cur==PAGE_ALBUM)) 
+ 	{	
+ 		lv_obj_add_flag( ui_dialogPanel, LV_OBJ_FLAG_HIDDEN );   /// Flags
+ 		camera_gvar.notice_anim_times =0;
+ 		printf(" ## noticeAnimationStop \n");
+ 	}
+ }
 
-// void noticeDisplayProcess(void)
-// {
-// 	if((camera_gvar.page_cur==PAGE_INTERCOM)||(camera_gvar.page_cur==PAGE_CAMERA)||(camera_gvar.page_cur==PAGE_ALBUM)) 
-// 	{
-// 		if((camera_gvar.notice_anim_times)&&(camera_gvar.notice_anim_times!=255))
-// 		{
-// 			camera_gvar.notice_anim_times --;
-// 			printf(" ## notice_anim_times=%d \n",camera_gvar.notice_anim_times);
+void noticeDisplayProcess(void)
+{
+ 	if((camera_gvar.page_cur==PAGE_INTERCOM)||(camera_gvar.page_cur==PAGE_CAMERA)||(camera_gvar.page_cur==PAGE_ALBUM)) 
+ 	{
+ 		if((camera_gvar.notice_anim_times)&&(camera_gvar.notice_anim_times!=255))
+ 		{
+ 			camera_gvar.notice_anim_times --;
+ 			printf(" ## notice_anim_times=%d \n",camera_gvar.notice_anim_times);
 
-// 			if(camera_gvar.notice_anim_times== 0)
-// 			{
-// 				lv_obj_add_flag( ui_dialogPanel, LV_OBJ_FLAG_HIDDEN );   /// Flags
-// 			}
-// 		}
-
-// 	}
+			if(camera_gvar.notice_anim_times== 0)
+			{
+				lv_obj_add_flag( ui_dialogPanel, LV_OBJ_FLAG_HIDDEN );   /// Flags
+			}
+		}
+	}
+}
 	
-// }
+
 
 // 音量条渲染函数
  void render_vol_level(uint8_t vol)
@@ -1321,7 +1332,7 @@ void timer_event(){
 
 		//	wifi_connect_process();
 		// noticeDisplayProcess();
-		// sdcStatusProcess();   
+		 sdcStatusProcess();   
 		//date_time_display();
 
 		if(camera_gvar.welcome_times)
@@ -1906,7 +1917,6 @@ void lv_page_select(uint8_t page)
 		ui_intercomPage_screen_init();		
 
 	}
-#if 1
 	else if(page == PAGE_CAMERA){
 		#ifdef  P0P1_SWITCH
 			{
@@ -1920,7 +1930,7 @@ void lv_page_select(uint8_t page)
 				bbm_displaydecode_run =0;
 			}
 		#endif
-	#if 1
+	#if 0
 		//lcdc_set_video_en(lcd_dev,0);
 		//vpp_close(vpp_dev);
 		vpp_open(vpp_dev);
@@ -1929,7 +1939,7 @@ void lv_page_select(uint8_t page)
 		video_decode_mem1 = video_decode_config_mem1;
 		video_decode_mem2 = video_decode_config_mem2;
 
-		//lcdc_set_rotate_p0_up(lcd_dev,1); // p0 up
+		//lcdc_set_rotate_p0_up(lcd_dev,1); // p0 up 大小界面双层显示
 		lcdc_set_rotate_p0p1_start_location(lcd_dev,(SCALE_WIDTH-120-6),6,0,0);
 
 		jpg_dec_scale_del();
@@ -1954,7 +1964,7 @@ void lv_page_select(uint8_t page)
 
 		lcdc_set_rotate_p0p1_start_location(lcd_dev,0,0,0,0);
 
-		set_lcd_photo0_config(SCALE_WIDTH,SCALE_HIGH,0);
+		set_lcd_photo0_config(SCALE_WIDTH,SCALE_HIGH,0); //单层p0全屏
 
 		scale_to_lcd_config();
 
@@ -1969,6 +1979,7 @@ void lv_page_select(uint8_t page)
 
 		ui_cameraPage_screen_init();		
 	}
+	
 	else if(page == PAGE_ALBUM){
 	#ifdef  P0P1_SWITCH
 		{
@@ -2037,8 +2048,34 @@ void lv_page_select(uint8_t page)
 			curPage_obj = NULL;
 		}
 
-		ui_albumPage_screen_init();		
+		ui_albumPage_screen_init();
 	}
+
+	else if(page == PAGE_SET){
+	#ifdef  P0P1_SWITCH
+		{
+			delay_open_lcd_flash(3);
+			os_sleep_ms(10);
+			extern volatile uint8_t p0p1_switch_flag;
+			if((camera_gvar.page_back==PAGE_INTERCOM)&&(p0p1_switch_flag==1))
+			{
+				view_switch(1);
+			}
+			bbm_displaydecode_run =0;
+		}
+	#endif
+		lcd_info.lcd_p0p1_state = 2;
+//		lcdc_set_video_en(lcd_dev,0);  //关闭后导致进入相机或对讲模式无图像
+//		vpp_close(vpp_dev);
+		if(curPage_obj){
+			//lv_obj_clean(curPage_obj);
+			lv_obj_del(curPage_obj);
+			printf("## come to here \n");
+			curPage_obj = NULL;
+		}
+		ui_settingPage_screen_init();
+	}
+#if 0
 	else if(page == PAGE_USB)
 	{
 			lcd_info.lcd_p0p1_state = 2;
@@ -2082,15 +2119,12 @@ void lv_page_select(uint8_t page)
 	}
 #endif
 	else 
-	{	
+	{
 		printf("## PAGE select err !!! \r\n");
 		page == PAGE_INTERCOM;
 		lv_page_select(PAGE_INTERCOM);
 
 	}
-
-
-
 	
 }
 

@@ -55,9 +55,10 @@ void ui_event_homePage(lv_event_t * e){
 
 
 			case AD_PRESS:
-           // printf("AD_PRESS \n");
-            //if(page_index==0)
-			lv_page_select(camera_gvar.pagebtn_index+1);
+            // printf("AD_PRESS \n");
+//		    if(page_index==0)
+//		    lv_page_select(camera_gvar.pagebtn_index+1);
+            lv_page_select(PAGE_INTERCOM + camera_gvar.pagebtn_index);
             break;
 
 			case KEY_POWEROFF:

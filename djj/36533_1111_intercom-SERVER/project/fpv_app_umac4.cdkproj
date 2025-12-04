@@ -6685,16 +6685,19 @@ Board: txw81x
           </File>
         </VirtualDirectory>
         <VirtualDirectory Name="screens">
+          <File Name="../sdk/lib/fly_gui/screens/ui_albumPage.c">
+            <FileOption/>
+          </File>
+          <File Name="../sdk/lib/fly_gui/screens/ui_cameraPage.c">
+            <FileOption/>
+          </File>
           <File Name="../sdk/lib/fly_gui/screens/ui_homePage.c">
             <FileOption/>
           </File>
           <File Name="../sdk/lib/fly_gui/screens/ui_intercomPage.c">
             <FileOption/>
           </File>
-          <File Name="../sdk/lib/fly_gui/screens/ui_albumPage.c" ExcludeProjConfig="">
-            <FileOption/>
-          </File>
-          <File Name="../sdk/lib/fly_gui/screens/ui_cameraPage.c" ExcludeProjConfig="">
+          <File Name="../sdk/lib/fly_gui/screens/ui_settingPage.c">
             <FileOption/>
           </File>
         </VirtualDirectory>

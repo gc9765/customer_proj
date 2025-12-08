@@ -33,10 +33,7 @@ djj/36533_1111_intercom-SERVER/project/list/
 *.out
 *.s19
 *.srec
-*.mk
-*.bat
-*.cdkproj
-*.cdkws
+
 
 # Static analysis or temp build files
 *.su
@@ -65,6 +62,13 @@ Release/
 # -------------------------------
 # IDE Folders
 # -------------------------------
+
+# CDK
+*.mk
+*.cdkproj
+*.cdkws
+*.bat
+*.asm
 
 # Keil MDK
 *.uvguix.*

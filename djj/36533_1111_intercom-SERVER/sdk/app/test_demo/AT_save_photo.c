@@ -91,8 +91,10 @@ uint8_t get_bbm_take_photo_status(void)
 {
     if(photo_s)
     {
+		os_printf("## photo_s->running\n");
         return photo_s->running;
     }
+	os_printf("## get_bbm_take_photo_status == 0\n");
     return 0;
 }
 

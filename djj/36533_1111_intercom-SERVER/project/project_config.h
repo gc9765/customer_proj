@@ -84,18 +84,18 @@
 #define SCALE_EN						1
 #define SDH_EN                          1
 #define FS_EN                           1
-#define SD_SAVE                         (0&&SDH_EN&&FS_EN&&JPG_EN)
+#define SD_SAVE                         (1&&SDH_EN&&FS_EN&&JPG_EN)
 
 #define VCAM_EN                        (0 || DVP_EN)
 
 #define OPENDML_EN                      1
 #define UART_FLY_CTRL_EN                0
-#define PWM_EN                          0
+#define PWM_EN                          1
 #define KEY_MODULE_EN					1
 #define FLASHDISK_EN					1
 #define MP3_EN                          1
 #define AMR_EN                          1
-#define NET_PAIR                        1
+#define NET_PAIR                        0
 #define PRINTER_EN						0
 
 
@@ -148,7 +148,7 @@
 #define WIFI_ACS_SCAN_TIME              150         //每个信道的扫描时间，单位ms
 #define WIFI_MAX_PS_CNT                 30           //底层为休眠sta缓存的帧最大数量。0代表sta休眠由umac全程管理，底层不缓存
 #define CHANNEL_DEFAULT                 0
-#define SSID_DEFAULT                    "HG-WIFI_"
+#define SSID_DEFAULT                    "TXCS-WIFI_"
 #define WIFI_TX_DUTY_CYCLE              80         //tx发送占空比，单位是%，范围是0~100
 #define WIFI_SSID_FILTER_EN             0           //是否使能SSID过滤功能。使能后，只有隐藏SSID和指定SSID的beacon才会上传
 #define WIFI_PREVENT_PS_MODE_EN         1           //是否尽可能的阻止sta进入休眠
@@ -264,7 +264,7 @@
 
 
 
-#define  MOTO_AIN1_PIN	 255
+#define  MOTO_AIN1_PIN	 PA_5
 #define  MOTO_AIN2_PIN	 255
 #define  MOTO_BIN1_PIN	 255
 #define  MOTO_BIN2_PIN	 255

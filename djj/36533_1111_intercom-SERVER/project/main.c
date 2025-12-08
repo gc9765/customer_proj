@@ -1123,14 +1123,14 @@ void hardware_init(uint8 vcam)
 #endif
 
 #if SDH_EN && FS_EN
-    // extern bool fatfs_register();
-    // sd_open();
-    // fatfs_register();
+//     extern bool fatfs_register();
+//     sd_open();
+//     fatfs_register();
 #endif
 
 #if SD_SAVE
-	void sd_save_thread_start();
-    sd_save_thread_start();
+	//void sd_save_thread_start();
+    // sd_save_thread_start();
 #endif
 
 
@@ -1302,8 +1302,15 @@ int main(void)
 	gpio_set_val(PA_8,0);
 	gpio_iomap_output(PA_9,GPIO_IOMAP_OUTPUT); 
 	gpio_set_val(PA_9,0);
-    gpio_iomap_output(PA_5,GPIO_IOMAP_OUTPUT); 
-	gpio_set_val(PA_5,1);		
+	
+	// 使用PWM调节命名亮度，不再高电平固定亮度
+//  gpio_iomap_output(PA_5,GPIO_IOMAP_OUTPUT); 
+//	gpio_set_val(PA_5,1);	
+	// pwm调光，屏幕亮度初始化
+	lcd_backlight_init();
+
+
+
     sys_event_init(32);
     sys_event_take(SYS_EVENT(SYS_EVENT_WIFI, 0), sysevt_wifi_event, 0);
     sys_event_take(SYS_EVENT(SYS_EVENT_NETWORK, 0), sysevt_network_event, 0);
@@ -1338,7 +1345,7 @@ int main(void)
         //udpKeepAlive_init();
 
         /*开机提示音*/
-    	// play_pcmtone(&starttone);
+    	 play_pcmtone(&starttone);
         /*开机提示音*/
         
         mcu_watchdog_timeout(5);

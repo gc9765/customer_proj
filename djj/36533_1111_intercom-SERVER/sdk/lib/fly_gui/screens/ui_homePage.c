@@ -149,7 +149,7 @@ void ui_homePage_screen_init(){
 	lv_obj_set_style_text_font(ui_homePage, &alifangyuan16, 0);
 	lv_obj_set_flex_flow(ui_homePage,LV_FLEX_FLOW_COLUMN);      //
 	lv_obj_set_flex_align(ui_homePage, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-	lv_obj_set_style_pad_top(ui_homePage, 55, 0);  // 顶部间距
+	lv_obj_set_style_pad_top(ui_homePage, 50, 0);  // 顶部间距
 	// lv_obj_set_style_bg_img_src(ui_homePage, &intercom_bglogo, 0);
 	lv_obj_set_style_pad_row(ui_homePage, 20, 0);      // 行间距60像素
     lv_obj_set_style_pad_bottom(ui_homePage, 0, 0);   // 底部边距

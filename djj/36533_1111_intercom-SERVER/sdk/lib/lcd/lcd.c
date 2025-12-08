@@ -62,8 +62,6 @@ uint8 video_decode_config_mem2[SCALE_PHOTO1_CONFIG_W*PHOTO1_H+SCALE_PHOTO1_CONFI
 // uint8 video_decode_config_mem3[SCALE_PHOTO1_CONFIG_W*PHOTO1_H+SCALE_PHOTO1_CONFIG_W*PHOTO1_H/2] __attribute__ ((aligned(4),section(".psram.src")));
 
 
-       
-
 uint8 *video_decode_mem;
 uint8 *video_decode_mem1;
 uint8 *video_decode_mem2;
@@ -2317,6 +2315,42 @@ void lcd_module_run(uint16_t *w,uint16_t *h,uint8_t *rotate){
    
 }
 
+
+static struct hgpwm_v0 *s_bl_pwm = NULL;
+
+void lcd_backlight_init(void)
+{
+    s_bl_pwm = (struct hgpwm_v0 *)dev_get(HG_PWM0_DEVID);
+	
+    if (!s_bl_pwm) { 
+		printf("=========  PWM0 no dev !!! =========\r\n");
+		return;
+	}
+
+    // 参考spi_sensor.c
+    pwm_init((struct pwm_device *)s_bl_pwm, PWM_CHANNEL_0, 5, 3);
+    pwm_start((struct pwm_device *)s_bl_pwm, PWM_CHANNEL_0);
+	
+}
+
+void lcd_set_brightness(uint8_t level)   // 1~5 档
+{
+	int8_t duty_levlel = level+1;
+    if (level < 1) level = 1;
+    if (level > 5) level = 5;
+	
+	s_bl_pwm = (struct hgpwm_v0 *)dev_get(HG_PWM0_DEVID);
+	
+    if (!s_bl_pwm) { 
+		printf("=========  PWM0 no dev !!! =========\r\n");
+		return;
+	}
+
+	uint32_t duty = duty_levlel*1023;
+
+	pwm_ioctl((struct pwm_device *)s_bl_pwm, PWM_CHANNEL_0,
+              PWM_IOCTL_CMD_SET_PERIOD_DUTY_IMMEDIATELY, 1023*5, duty);
+}
 
 
 #endif

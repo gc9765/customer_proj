@@ -544,8 +544,8 @@ void ui_event_intercomPage(lv_event_t * e){
 			case KEY_BACK:    //退出对讲
 
 
-			if(get_net_pair_status())
-				userPairstop();
+//			if(get_net_pair_status())
+//				userPairstop();
 			
 			printf("##=========== exit pair mode  \n");
 

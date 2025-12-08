@@ -306,18 +306,6 @@ const lv_img_dsc_t *ui_imgset_iconHomeCamera[2] = {&iconHomeCamera0,&iconHomeCam
 const lv_img_dsc_t *ui_imgset_iconHomeMenu[2] = {&iconHomeMenu0,&iconHomeMenu1};
 const lv_img_dsc_t *ui_imgset_iconHomePlayer[2] = {&iconHomePlayer0,&iconHomePlayer1};
 
-// //设置页面图标数组定义
-//const lv_img_dsc_t *ui_imgset_iconSettSubImgs[] = {
-//    &iconMenuLanguage,    言
-//    &iconMenuVolume,       亮度 (使用音量图标替代)
-//    &iconMenuPoff,         睡眠模式 (使用关机图标替代)
-//    &iconMenuSoff,         屏保模式
-//    &iconMenuVolume,       声音
-//    &iconMenuFormat,       格式化
-//    &iconMenuVersion       版本信息
-//};
-
-
 
 // 两帧 VGA（640x480） YUV(或类似) 缓冲区，放在外部 PSRAM
 uint8_t vga_room[2][640*480+640*480/2]__attribute__ ((aligned(4),section(".psram.src")));
@@ -463,7 +451,7 @@ void event_handler(lv_event_t * e)
 	{
 		LV_LOG_USER("Clicked");
 
-		printf(" # Clicked camera_gvar.page_cur=%d ,event_handler=%d USER_KEY_EVENT=%d  \n",camera_gvar.page_cur,code,USER_KEY_EVENT);
+//		printf(" # Clicked camera_gvar.page_cur=%d ,event_handler=%d USER_KEY_EVENT=%d  \n",camera_gvar.page_cur,code,USER_KEY_EVENT);
 		
 		if(camera_gvar.page_cur == PAGE_HOME){
 			ui_event_homePage(e);
@@ -477,7 +465,6 @@ void event_handler(lv_event_t * e)
 		else if(camera_gvar.page_cur == PAGE_SET){
 			ui_event_settPage(e);
 		}
-
 		else if(camera_gvar.page_cur == PAGE_ALBUM){
 			ui_event_albumPage(e);
 		}
@@ -512,14 +499,14 @@ void batteryStatusProcess(void)
           lv_img_set_src(ui_homeBatImg, ui_imgset_iconBat[bt_status]);
 	else if(camera_gvar.page_cur == PAGE_INTERCOM)//photo
 		lv_img_set_src(ui_intercomBatImg, ui_imgset_iconBat[bt_status]);
-	// else if(camera_gvar.page_cur == PAGE_CAMERA)//photo
-	// 	lv_img_set_src(ui_camBatImg, ui_imgset_iconBat[bt_status]);
-	// else if(camera_gvar.page_cur == PAGE_ALBUM)//playback
-	// 	lv_img_set_src(ui_albumBatImg, ui_imgset_iconBat[bt_status]);
+	 else if(camera_gvar.page_cur == PAGE_CAMERA)//photo
+	 	lv_img_set_src(ui_camBatImg, ui_imgset_iconBat[bt_status]);
+	 else if(camera_gvar.page_cur == PAGE_ALBUM)//playback
+	 	lv_img_set_src(ui_albumBatImg, ui_imgset_iconBat[bt_status]);
 	//else if(camera_gvar.page_cur == PAGE_VIDEO)//rec
 	//	lv_img_set_src(ui_vBatImg, ui_imgset_iconBat[bt_status]);
-	// else if(camera_gvar.page_cur == PAGE_SET)//sett
-	// 	lv_img_set_src(ui_settBatImg, ui_imgset_iconBat[bt_status]);
+	 else if(camera_gvar.page_cur == PAGE_SET)//sett
+	 	lv_img_set_src(ui_settBatImg, ui_imgset_iconBat[bt_status]);
 	// else if(camera_gvar.page_cur == PAGE_GAME)//game
 	// 	lv_img_set_src(ui_gameBatImg, ui_imgset_iconBat[bt_status]);
 	// else if(camera_gvar.page_cur == PAGE_MUSIC)//music
@@ -922,8 +909,8 @@ void intercom_wifi(void)
 	{
 		#if  BABY_ROLE_SERVER
 
-				if(get_net_pair_status())
-					userPairstop();
+//				if(get_net_pair_status())
+//					userPairstop();
 
 				ieee80211_disassoc_all(WIFI_MODE_AP);
 				os_memset(sys_cfgs.bssid, 0, 6);
@@ -1105,7 +1092,7 @@ void userPairStart(void)
 {
 
 	printf(" ## userPairStart \n");
-	set_pair_mode(1);
+//	set_pair_mode(1);
 	camera_gvar.pair_out_times =60;
 	camera_gvar.pair_success=0;
 	lcd_pair_success = 0;
@@ -1124,7 +1111,7 @@ void userPairStart(void)
 void userPairstop(void)
 {
 	printf(" ## userPairStop \n");
-	set_pair_mode(0);
+//	set_pair_mode(0);
 }
 // 配对成功函数
 void userPairSuccess(void)
@@ -1344,7 +1331,7 @@ void timer_event(){
 	}
 
 	if((timer_count%10) == 0){ // one second 
-		pairDisplayProcess();  //配对检测
+//		pairDisplayProcess();  //配对检测
 	}	
 
 	if((timer_count%20) == 0){ // 

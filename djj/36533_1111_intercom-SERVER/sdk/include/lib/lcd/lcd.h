@@ -188,6 +188,9 @@ void lcd_user_frame(uint32 frame_addr);
 void jpg_decode_to_lcd(uint32 photo,uint32 jpg_w,uint32 jpg_h,uint32 video_w,uint32 video_h);
 int32 jpg_decode_is_finish();
 
+void lcd_backlight_init(void);
+void lcd_set_brightness(uint8_t level);
 
+void lcd_backlight_test_simple();
 
 #endif

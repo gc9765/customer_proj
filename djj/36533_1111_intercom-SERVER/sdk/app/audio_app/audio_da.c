@@ -707,11 +707,14 @@ void audio_da_init()
 	audio_da_cfg->audio_hz = AUDAC_SAMPLE_RATE_8K;	
 	stream *dest = audio_dac_stream_init(R_SPEAKER);
 	*((uint32_t*)0x4000802c) |= 0x690000;
-    audac_open(audio_da, audio_da_cfg->audio_hz );
+    if (audac_open(audio_da, audio_da_cfg->audio_hz )==RET_ERR){
+		printf("audac_open fail !!!\r\n");
+		return;
+	}else{
     audac_request_irq(audio_da, AUDAC_IRQ_FLAG_HALF | AUDAC_IRQ_FLAG_FULL, (audac_irq_hdl)audio_dac_irq, (uint32_t)audio_da_cfg);
     audio_da_cfg->irq_func(audio_da_cfg , audio_da_cfg->play_empty_buf, audio_da_cfg->buf_size);
 	global_audio_dac_s = dest;
-
+	}
     return;
 }
 

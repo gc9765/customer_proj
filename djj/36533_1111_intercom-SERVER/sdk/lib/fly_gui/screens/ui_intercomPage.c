@@ -544,8 +544,8 @@ void ui_event_intercomPage(lv_event_t * e){
 			case KEY_BACK:    //退出对讲
 
 
-//			if(get_net_pair_status())
-//				userPairstop();
+			if(get_net_pair_status())
+				userPairstop();
 			
 			printf("##=========== exit pair mode  \n");
 
@@ -635,8 +635,9 @@ void ui_event_intercomPage(lv_event_t * e){
 extern uint8_t get_wifi_connect_flag(void);
 
 void ui_intercomPage_screen_init(){
-
-		struct netdev *ndev=(struct netdev*)dev_get(HG_WIFI0_DEVID);
+//	intercom_init();
+	
+	struct netdev *ndev=(struct netdev*)dev_get(HG_WIFI0_DEVID);
 		if(ndev){
 			struct netif *netif=(struct netif *)ndev->stack_data;
 			netif_set_down(netif);

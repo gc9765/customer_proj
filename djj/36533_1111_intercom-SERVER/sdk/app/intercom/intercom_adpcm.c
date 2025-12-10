@@ -17,9 +17,9 @@
 #include "hal/timer_device.h"
       
 #include "babyprotocol.h"
-#define PIN_SPK_MUTE   PA_6
+#define PIN_SPK_MUTE   PA_7
 
-#define MUTE_SPEAKER    0
+#define MUTE_SPEAKER    0   //对讲时是否开启喇叭 ,0静音
 #define SERVER_RECORD   0
 #define SERVER_RECORD_NODE_NUM	70
 
@@ -1369,7 +1369,8 @@ void mute_speaker(uint8 enable)
 	gpio_set_mode(PIN_SPK_MUTE, GPIO_PULL_NONE, GPIO_PULL_LEVEL_NONE);
 	gpio_set_dir(PIN_SPK_MUTE, GPIO_DIR_OUTPUT);
 
-	gpio_set_val(PIN_SPK_MUTE, enable);
+	int val = gpio_set_val(PIN_SPK_MUTE, enable);
+	os_printf("PA_7 current value: %d\n", val);
 }
 
 void decode_sem_up(uint32 *args)

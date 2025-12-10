@@ -208,8 +208,8 @@ uint32_t key_get_data()
 			}
 			key = (val>>8);
 
-			/*home界面  按建提示音*/ 
-			if((key>KEY_NONE)&&(camera_gvar.page_cur==PAGE_HOME))
+			/*home/设置/相册界面  按建提示音*/ 
+			if((key>KEY_NONE)&&((camera_gvar.page_cur==PAGE_HOME)||(camera_gvar.page_cur==PAGE_ALBUM)||(camera_gvar.page_cur==PAGE_SET)))
 			play_pcmtone((pcmtone_struct*)&keytone);
 			/*home界面  按建提示音*/ 
 

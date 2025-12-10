@@ -60,6 +60,8 @@
 #include "flashdisk/flashdisk.h"
 #include "osal_file.h"
 
+#include "hal/audac.h"
+
 #if MP3_EN
 #include "mp3/mp3_decode.h"
 #include "third_audio/libmad/global.h"
@@ -1052,8 +1054,8 @@ uint8 vcam_en()
 
 void hardware_init(uint8 vcam)
 {
-	//gpio_set_val(PC_7,1);
-	//gpio_iomap_output(PC_7,GPIO_IOMAP_OUTPUT);
+	gpio_set_val(PC_7,0);
+	gpio_iomap_output(PC_7,GPIO_IOMAP_OUTPUT);
     if(vcam == FALSE)
 	{
 		os_printf("vcam err\n");
@@ -1129,8 +1131,8 @@ void hardware_init(uint8 vcam)
 #endif
 
 #if SD_SAVE
-	//void sd_save_thread_start();
-    // sd_save_thread_start();
+//	void sd_save_thread_start(); // 没有实现
+//     sd_save_thread_start();
 #endif
 
 
@@ -1240,6 +1242,15 @@ static int32 main_loop(struct os_work *work)
     #endif
 #endif
 
+struct os_task startup_tone_task_hdl;
+
+  // 创建一个专门的延时播放任务
+static void startup_tone_task(void *arg) {
+      os_sleep_ms(200);  // 延时200ms
+      play_pcmtone(&starttone);
+  }
+
+
 #ifndef SPEED_TEST_DEMO
 int main(void)
 {
@@ -1345,8 +1356,10 @@ int main(void)
         //udpKeepAlive_init();
 
         /*开机提示音*/
-    	 play_pcmtone(&starttone);
+//    	 play_pcmtone(&starttone);
+		OS_TASK_INIT("startup_tone", &startup_tone_task_hdl, startup_tone_task, NULL, OS_TASK_PRIORITY_NORMAL-1, 1024);
         /*开机提示音*/
+		
         
         mcu_watchdog_timeout(5);
         OS_WORK_INIT(&main_wk, main_loop, 0);

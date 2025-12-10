@@ -272,7 +272,7 @@ static void create_submenu(uint8_t main_index)
     case SETMENU_SOUND:
         table        = volume_opts;
         sub_item_cnt = sizeof(volume_opts) / sizeof(volume_opts[0]);
-        sub_sel_index = camSetParam.volumeSet;    /* 0~3 */
+        sub_sel_index = camSetParam.volumeSet*3;    /* 0~3 */
         if (sub_sel_index >= sub_item_cnt) sub_sel_index = 0;
         break;
 
@@ -357,6 +357,8 @@ static void setting_apply_sub_choice(void)
 
     case SETMENU_SOUND:
         camSetParam.volumeSet = sub_sel_index;            /* 0~3 */
+		if(camSetParam.volumeSet == 9) camSetParam.volumeSet = 10;
+		volume_adjust(camSetParam.volumeSet);             //设置音量
         break;
 
     case SETMENU_FORMAT:
@@ -393,7 +395,7 @@ void ui_event_settPage(lv_event_t * e)
     if (!in_subpage) {
         switch (*key_val) {
         case AD_LEFT:
-        case AD_VOL_UP:
+//        case AD_VOL_UP:
             if (camera_gvar.settingtab_index > 0)
                 camera_gvar.settingtab_index--;
             else
@@ -402,13 +404,14 @@ void ui_event_settPage(lv_event_t * e)
             break;
 
         case AD_RIGHT:
-        case AD_VOL_DOWN:
+//        case AD_VOL_DOWN:
             if (camera_gvar.settingtab_index < (SETMENU_MAX - 1))
                 camera_gvar.settingtab_index++;
             else
                 camera_gvar.settingtab_index = 0;
             update_setting_highlight();
             break;
+		
 
         case AD_PRESS:
             /* 进入二级菜单 */
@@ -421,9 +424,9 @@ void ui_event_settPage(lv_event_t * e)
             create_submenu(cur_sub_id);
             break;
 
-        case KEY_STICKER:
-        case KEY_M:
-        case KEY_CALL:
+        case AD_BACK:
+//        case KEY_M:
+//        case KEY_CALL:
             /* 一级菜单时返回主页 */
             lv_page_select(PAGE_HOME);
             break;
@@ -443,9 +446,9 @@ void ui_event_settPage(lv_event_t * e)
     /* 版本信息页：只有一行文字，按返回/确认都回一级 */
     if (cur_sub_id == SETMENU_VERSION) {
         switch (*key_val) {
-        case KEY_STICKER:
-        case KEY_M:
-        case KEY_CALL:
+//        case KEY_STICKER:
+//        case KEY_M:
+//        case KEY_CALL:
         case AD_PRESS:
             in_subpage = false;
             if (subMenuContainer) {
@@ -464,7 +467,7 @@ void ui_event_settPage(lv_event_t * e)
 
     switch (*key_val) {
     case AD_LEFT:
-    case AD_VOL_UP:
+//    case AD_VOL_UP:
         if (sub_item_cnt > 0) {
             if (sub_sel_index > 0)
                 sub_sel_index--;
@@ -475,7 +478,7 @@ void ui_event_settPage(lv_event_t * e)
         break;
 
     case AD_RIGHT:
-    case AD_VOL_DOWN:
+//    case AD_VOL_DOWN:
         if (sub_item_cnt > 0) {
             if (sub_sel_index < sub_item_cnt - 1)
                 sub_sel_index++;
@@ -499,9 +502,9 @@ void ui_event_settPage(lv_event_t * e)
         update_setting_highlight();
         break;
 
-    case KEY_STICKER:
-    case KEY_M:
-    case KEY_CALL:
+    case AD_BACK:
+//    case KEY_M:
+//    case KEY_CALL:
         /* 取消，不保存，直接回一级 */
         in_subpage = false;
         if (subMenuContainer) {

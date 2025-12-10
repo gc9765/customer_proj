@@ -37,8 +37,8 @@ int adc_digitmute_flag=1;
 #define AEC_PROCESS   0
 #define AGC_PROCESS   0
 #define VAD_PROCESS   0
-#define NSX_PROCESS   1
-#define MAGIC_SOUND   1
+#define NSX_PROCESS   1  //噪声抑制
+#define MAGIC_SOUND   1  //魔音
 int aec_flag = -1;
 int agc_flag = -1;
 int vad_flag = -1;

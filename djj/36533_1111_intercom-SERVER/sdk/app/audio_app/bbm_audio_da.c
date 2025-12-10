@@ -699,8 +699,6 @@ const uint32 dacgain_table[]=
 void volume_adjust(uint8_t vol)
 {
 	struct audac_device *test = (struct audac_device *)dev_get(HG_AUDAC_DEVID);
-
-
 	if(vol>10)
 		vol =10;
 
@@ -709,7 +707,6 @@ void volume_adjust(uint8_t vol)
 		backVol = vol;
 		audac_ioctl(test,AUDAC_IOCTL_CMD_SET_DIGITAL_GAIN,dacgain_table[vol],0);
 	}
-	
 }
 
 
@@ -719,9 +716,13 @@ void audio_da_init()
 {
 	struct aufade_device *fade = (struct aufade_device *)dev_get(HG_AUFADE_DEVID);
 	aufade_open(fade);
-	os_printf("%s:%d\n",__FUNCTION__,__LINE__);
 
     struct audac_device *audio_da = (struct audac_device *)dev_get(HG_AUDAC_DEVID);
+	if(!audio_da)
+	{
+		os_printf("audio_da dev get err\n");	
+		return;	
+	}
 
     memset(&global_audio_da,0,sizeof(global_audio_da));
 	audio_da_config *audio_da_cfg = &global_audio_da;

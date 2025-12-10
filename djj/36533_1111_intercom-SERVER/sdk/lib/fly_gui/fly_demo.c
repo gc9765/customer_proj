@@ -52,6 +52,8 @@
 
 #include "playback/playback.h"
 #include "babyprotocol.h"
+
+#include "hal/audac.h"
 typedef struct 
 {
 	struct spi_nor_flash *flash;
@@ -909,8 +911,8 @@ void intercom_wifi(void)
 	{
 		#if  BABY_ROLE_SERVER
 
-//				if(get_net_pair_status())
-//					userPairstop();
+				if(get_net_pair_status())
+					userPairstop();
 
 				ieee80211_disassoc_all(WIFI_MODE_AP);
 				os_memset(sys_cfgs.bssid, 0, 6);
@@ -1008,7 +1010,7 @@ void noticeDisplayProcess(void)
 // 音量条显示动画开始函数
 void volDisAnimationStart(void)
 {
-	if((camera_gvar.page_cur==PAGE_INTERCOM)||(camera_gvar.page_cur==PAGE_ALBUM)) //camera page
+	 	if((camera_gvar.page_cur==PAGE_INTERCOM)||(camera_gvar.page_cur==PAGE_CAMERA)||(camera_gvar.page_cur==PAGE_ALBUM))  //camera page
 	{	
 		// visiable shot icon
 		lv_obj_clear_flag( ui_volPanel, LV_OBJ_FLAG_HIDDEN );   /// Flags
@@ -1020,7 +1022,7 @@ void volDisAnimationStart(void)
 // 音量条显示动画处理函数
 void volDisplayProcess(void)
 {
-	if((camera_gvar.page_cur==PAGE_INTERCOM)||(camera_gvar.page_cur==PAGE_ALBUM)) //camera page
+	 	if((camera_gvar.page_cur==PAGE_INTERCOM)||(camera_gvar.page_cur==PAGE_CAMERA)||(camera_gvar.page_cur==PAGE_ALBUM))  //camera page
 	{
 		if(camera_gvar.volume_anim_times)
 		{
@@ -1092,7 +1094,7 @@ void userPairStart(void)
 {
 
 	printf(" ## userPairStart \n");
-//	set_pair_mode(1);
+	set_pair_mode(1);
 	camera_gvar.pair_out_times =60;
 	camera_gvar.pair_success=0;
 	lcd_pair_success = 0;
@@ -1111,7 +1113,7 @@ void userPairStart(void)
 void userPairstop(void)
 {
 	printf(" ## userPairStop \n");
-//	set_pair_mode(0);
+	set_pair_mode(0);
 }
 // 配对成功函数
 void userPairSuccess(void)
@@ -1331,7 +1333,7 @@ void timer_event(){
 	}
 
 	if((timer_count%10) == 0){ // one second 
-//		pairDisplayProcess();  //配对检测
+		pairDisplayProcess();  //配对检测
 	}	
 
 	if((timer_count%20) == 0){ // 
@@ -1666,7 +1668,7 @@ void poweron_welcome(void)
 	camera_gvar.pagebtn_index =0;
 	camera_gvar.gametab_index =2;
 	camera_gvar.poweron_nextpage= PAGE_HOME;//PAGE_HOME;//PAGE_CAMERA;//PAGE_INTERCOM;
-	camSetParam.volumeSet =6 ;   //初始 音量设置(0-10);
+	camSetParam.volumeSet =10 ;   //初始 音量设置(0-10);
 	camSetParam.languageType=1;
 	
 	volume_adjust(camSetParam.volumeSet);

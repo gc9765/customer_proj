@@ -95,7 +95,7 @@
 #define FLASHDISK_EN					1
 #define MP3_EN                          1
 #define AMR_EN                          1
-#define NET_PAIR                        0
+#define NET_PAIR                        1
 #define PRINTER_EN						0
 
 

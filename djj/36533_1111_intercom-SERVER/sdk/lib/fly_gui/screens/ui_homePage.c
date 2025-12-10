@@ -31,7 +31,7 @@ void ui_event_homePage(lv_event_t * e){
 		switch(*key_val)
 		{
 			case AD_LEFT: 
-			case AD_VOL_UP:
+//			case AD_VOL_UP:
             //printf("AD_UP \n");            
             if(camera_gvar.pagebtn_index>0)
                 --camera_gvar.pagebtn_index;
@@ -42,7 +42,7 @@ void ui_event_homePage(lv_event_t * e){
 			break;
 			
 			case AD_RIGHT:
-			case AD_VOL_DOWN:
+//			case AD_VOL_DOWN:
             //printf("AD_DOWN \n");
              if(camera_gvar.pagebtn_index<3)
                 ++camera_gvar.pagebtn_index;
@@ -52,7 +52,7 @@ void ui_event_homePage(lv_event_t * e){
 			camera_gvar.immediately_reflash_flag=1;
 			//printf("##down  camera_gvar.pagebtn_index=%d \n",camera_gvar.pagebtn_index);
 			break;
-
+			
 
 			case AD_PRESS:
             // printf("AD_PRESS \n");

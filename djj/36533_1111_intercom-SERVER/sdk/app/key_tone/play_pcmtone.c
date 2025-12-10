@@ -41,6 +41,7 @@ int32 play_pcmtone(pcmtone_struct * tone)
 		// 启一个线程 处理 筛选下来的 文件播放
 		OS_TASK_INIT("play_pcmtone", &play_tone_task, play_tone_thread, (uint32)tone, OS_TASK_PRIORITY_NORMAL, 1024);
 	}
+
 }
 
 static int opcode_func(stream *s,void *priv,int opcode)
@@ -123,6 +124,7 @@ int play_tone_thread(void *d)
 	}
 
 	former_dac_priv = get_audio_dac_set_filter_type(); // 获取dac 过滤类型
+	
 	audio_dac_set_filter_type(SOUND_PCM);
 
 	while(read_total_len < audio_data_len)
@@ -130,7 +132,7 @@ int play_tone_thread(void *d)
 		data = get_src_data_f(src); // file_audio流里面获取一个 空的数据节点
 		if(data)
 		{
-			//os_printf("## read_total_len=%d \n",read_total_len);
+			os_printf("## read_total_len=%d \n",read_total_len);
 
 			if((read_total_len+AUDIO_LEN)<audio_data_len)
 			{

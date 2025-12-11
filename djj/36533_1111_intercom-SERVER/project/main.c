@@ -60,6 +60,8 @@
 #include "flashdisk/flashdisk.h"
 #include "osal_file.h"
 
+#include "hal/audac.h"
+
 #if MP3_EN
 #include "mp3/mp3_decode.h"
 #include "third_audio/libmad/global.h"

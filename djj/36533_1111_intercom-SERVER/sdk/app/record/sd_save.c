@@ -937,7 +937,7 @@ static uint32_t a2i(char *str)
     return ret;
 }
 
-void *creat_takephoto_file(char *dir_name)
+static void *creat_takephoto_file(char *dir_name)
 {
     DIR  avi_dir;
     FRESULT ret;
@@ -1014,10 +1014,6 @@ void take_photo_thread(void *d)
 
 	jpeg_stream_init();
 	if(itp_h <= 1080){
-		if(yuvbuf == NULL) {
-          os_printf("yuvbuf is NULL, cannot take photo!\n");
-          goto take_photo_end;
-		}
 		scale_from_vpp_to_jpg(scale_dev,(uint32)yuvbuf,photo_msg.in_w,photo_msg.in_h,itp_w,itp_h);
 	}	
 
@@ -1076,10 +1072,6 @@ void take_photo_thread(void *d)
 		}
 
 	}
-	
-	// 在函数结尾添加标签
-	take_photo_end:
-//	os_printf("take_photo_thread ended\n");
 	
 	scale_close(scale_dev);
 

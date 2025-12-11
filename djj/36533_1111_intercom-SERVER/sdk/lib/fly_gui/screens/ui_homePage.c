@@ -103,7 +103,7 @@ void ui_homePage_screen_init(){
 
 /****init  page_btn  style***/  // 修改按钮样式
 	lv_style_init(&pageBtnStyle);
-	lv_style_set_width(&pageBtnStyle, 60);  //92-->70
+	lv_style_set_width(&pageBtnStyle, 65);  //60-->80 增加宽度以显示完整英文单词
 	lv_style_set_height(&pageBtnStyle, 90);  //110->90
 	 lv_style_set_bg_color(&pageBtnStyle, lv_color_hex(0x101018));	//0x101018
 	lv_style_set_bg_opa(&pageBtnStyle, 0);	
@@ -120,8 +120,8 @@ void ui_homePage_screen_init(){
 
 /****init  btn_img  style***/  //图标样式
 	lv_style_init(&btnImgStyle);
-	lv_style_set_width(&btnImgStyle, 60);    //92-->60
-	lv_style_set_height(&btnImgStyle, 62);   // 96-->60
+	lv_style_set_width(&btnImgStyle, 65);    // 减小图标宽度
+	lv_style_set_height(&btnImgStyle, 65);   // 减小图标高度
 	 lv_style_set_bg_color(&btnImgStyle, lv_color_hex(0x000000));	//0x101018
 	//lv_style_set_bg_opa(&btnImgStyle, 0);	
 	lv_style_set_shadow_color(&btnImgStyle, lv_color_make(0x00, 0x00, 0x00));
@@ -133,9 +133,12 @@ void ui_homePage_screen_init(){
 
 /****init  btn_text  style***/
 	lv_style_init(&btnTextStyle);
-	// lv_style_set_width(&btnTextStyle, LV_SIZE_CONTENT);
-	// lv_style_set_height(&btnTextStyle, LV_SIZE_CONTENT);
 	lv_style_set_text_color(&btnTextStyle,lv_color_hex(0x808080));
+	lv_style_set_text_letter_space(&btnTextStyle, 0);  // 正常字符间距
+	// 启用自动换行和居中对齐
+	lv_style_set_text_decor(&btnTextStyle, LV_TEXT_DECOR_NONE);  // 无装饰
+	lv_style_set_text_align(&btnTextStyle, LV_TEXT_ALIGN_CENTER);  // 居中对齐
+	lv_style_set_text_line_space(&btnTextStyle, 2);  // 设置行间距
 	
 	
 /*-----------home page---------------*/
@@ -162,8 +165,8 @@ void ui_homePage_screen_init(){
     lv_obj_clear_flag(row1, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_flex_flow(row1, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(row1, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-	lv_obj_set_style_pad_left(row1, 35, 0);
-	lv_obj_set_style_pad_column(row1, 50, 0);
+	lv_obj_set_style_pad_left(row1, 30, 0);  // 减少左边距从35到15
+	lv_obj_set_style_pad_column(row1, 50, 0);  // 减少列间距从50到30
 	// 添加透明背景设置
     lv_obj_set_style_bg_opa(row1, LV_OPA_TRANSP, 0);  // 设置背景透明
     lv_obj_set_style_border_width(row1, 0, 0);         // 移除边框
@@ -176,8 +179,8 @@ void ui_homePage_screen_init(){
     lv_obj_clear_flag(row2, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_flex_flow(row2, LV_FLEX_FLOW_ROW);
     lv_obj_set_flex_align(row2, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_set_style_pad_left(row2, 35, 0);
-	lv_obj_set_style_pad_column(row2, 50, 0);
+    lv_obj_set_style_pad_left(row2, 30, 0);  // 减少左边距从35到15
+	lv_obj_set_style_pad_column(row2, 50, 0);  // 减少列间距从50到30
 	lv_obj_set_style_bg_opa(row2, LV_OPA_TRANSP, 0);  // 设置背景透明
     lv_obj_set_style_border_width(row2, 0, 0);         // 移除边框
     lv_obj_set_style_outline_width(row2, 0, 0);       // 移除轮廓
@@ -198,8 +201,10 @@ void ui_homePage_screen_init(){
 	lv_obj_set_style_bg_img_src( ui_intercomImg, ui_imgset_iconHomeintercom[0], LV_PART_MAIN | LV_STATE_DEFAULT );
 
 	lv_obj_t *ui_intercomText = lv_label_create(ui_intercomBtn);
-	// lv_obj_set_align( ui_intercomText, LV_ALIGN_BOTTOM_MID );
+	lv_obj_set_size(ui_intercomText, LV_PCT(100), LV_SIZE_CONTENT);  // 宽度100%（相对于按钮），高度自适应
+	lv_obj_set_pos(ui_intercomText, 0, 35);  // 设置文本位置：从顶部35像素开始（在图标下方）
 	lv_obj_add_style(ui_intercomText, &btnTextStyle, 0);
+	lv_label_set_long_mode(ui_intercomText, LV_LABEL_LONG_WRAP);  // 启用自动换行
 	//lv_label_set_text(ui_intercomText,"Camera");
 	lv_label_set_text(ui_intercomText, (const char *)ui_language_switch[camSetParam.languageType][INTERCOM_STR]);
 
@@ -223,8 +228,10 @@ void ui_homePage_screen_init(){
 	lv_obj_set_style_bg_img_src( ui_cameraImg, ui_imgset_iconHomeCamera[0], LV_PART_MAIN | LV_STATE_DEFAULT );
 
 	lv_obj_t *ui_cameraText = lv_label_create(ui_cameraBtn);
-	// lv_obj_set_align( ui_cameraText, LV_ALIGN_BOTTOM_MID );
+	lv_obj_set_size(ui_cameraText, LV_PCT(100), LV_SIZE_CONTENT);  // 宽度100%（相对于按钮），高度自适应
+	lv_obj_set_pos(ui_cameraText, 0, 35);  // 设置文本位置：从顶部35像素开始（在图标下方）
 	lv_obj_add_style(ui_cameraText, &btnTextStyle, 0);
+	lv_label_set_long_mode(ui_cameraText, LV_LABEL_LONG_WRAP);  // 启用自动换行
 	//lv_label_set_text(ui_cameraText,"Camera");
 	lv_label_set_text(ui_cameraText, (const char *)ui_language_switch[camSetParam.languageType][TAKEPHOTO_STR]);
 
@@ -248,7 +255,10 @@ void ui_homePage_screen_init(){
 	lv_obj_set_style_bg_img_src( ui_albumImg, ui_imgset_iconHomePlayer[0], LV_PART_MAIN | LV_STATE_DEFAULT );
 
 	lv_obj_t *ui_albumText = lv_label_create(ui_albumBtn);
+	lv_obj_set_size(ui_albumText, LV_PCT(100), LV_SIZE_CONTENT);  // 宽度100%（相对于按钮），高度自适应
+	lv_obj_set_pos(ui_albumText, 0, 35);  // 设置文本位置：从顶部35像素开始（在图标下方）
 	lv_obj_add_style(ui_albumText, &btnTextStyle, 0);
+	lv_label_set_long_mode(ui_albumText, LV_LABEL_LONG_WRAP);  // 启用自动换行
 	lv_label_set_text(ui_albumText, (const char *)ui_language_switch[camSetParam.languageType][PHOTO_STR]);
 
 	albumPage_btn = ui_albumImg;	
@@ -271,7 +281,10 @@ void ui_homePage_screen_init(){
     lv_obj_set_style_bg_img_src( ui_settImg,ui_imgset_iconHomeMenu[0], LV_PART_MAIN | LV_STATE_DEFAULT );
     
     lv_obj_t *ui_settText = lv_label_create(ui_settBtn);
+    lv_obj_set_size(ui_settText, LV_PCT(100), LV_SIZE_CONTENT);  // 宽度100%（相对于按钮），高度自适应
+    lv_obj_set_pos(ui_settText, 0, 35);  // 设置文本位置：从顶部35像素开始（在图标下方）
     lv_obj_add_style(ui_settText, &btnTextStyle, 0);
+    lv_label_set_long_mode(ui_settText, LV_LABEL_LONG_WRAP);  // 启用自动换行
     lv_label_set_text(ui_settText, (const char*)ui_language_switch[camSetParam.languageType][SETTING_STR]); //使用多语言
     
     settPage_btn = ui_settImg;    // 连接到全局变量

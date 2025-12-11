@@ -84,7 +84,7 @@
 #define SCALE_EN						1
 #define SDH_EN                          1
 #define FS_EN                           1
-#define SD_SAVE                         (0&&SDH_EN&&FS_EN&&JPG_EN)
+#define SD_SAVE                         (1&&SDH_EN&&FS_EN&&JPG_EN)
 
 #define VCAM_EN                        (0 || DVP_EN)
 
@@ -946,11 +946,11 @@
 
 #define DEFAULT_SYS_CLK   				(240*1000000) 
 
-#define USB_EN                          1
+#define USB_EN                          0
 #define USB_HOST_EN                     0
 #define MACBUS_USB
 //#define USB_DEVICE_MASS_OR_UVC        		//使用rtt device架构需将此宏注释
-#define USBDISK                         1   //1代表将sd卡作为u盘   2代表将flash作为usb盘,需要配合USB_EN使用,并且其他宏不能有冲突
+#define USBDISK                         0   //1代表将sd卡作为u盘   2代表将flash作为usb盘,需要配合USB_EN使用,并且其他宏不能有冲突
 
 /*=========== RTT USB架构宏定义 ==========*/
 #define RTT_USB_EN                      0	//RTT USB 架构使能 (USB_EN打开)

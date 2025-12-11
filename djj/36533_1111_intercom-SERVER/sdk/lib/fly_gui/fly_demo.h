@@ -2,8 +2,8 @@
 #define _FLY_DEMO_
 
 #define BABY_UI_MAGICSOUND
-//#define DISPLAY_DEBUGINFO_ENABLE
-#define AUTO_POWER_OFF_ENABLE
+#define DISPLAY_DEBUGINFO_ENABLE
+//#define AUTO_POWER_OFF_ENABLE
 
 
 struct lv_time {
@@ -449,7 +449,8 @@ LV_FONT_DECLARE( lv_font_simsun_16_cjk );  // 更完整的中文字体
 LV_FONT_DECLARE( alifangyuan16);
 LV_FONT_DECLARE( alifangyuan28);
 LV_FONT_DECLARE( alifangyuan18);
-
+LV_FONT_DECLARE( djj18);
+LV_FONT_DECLARE( djj18bit1);
 
 extern const lv_img_dsc_t *ui_imgset_iconBat[];
 extern const lv_img_dsc_t *ui_imgset_iconGameSubImgs[];

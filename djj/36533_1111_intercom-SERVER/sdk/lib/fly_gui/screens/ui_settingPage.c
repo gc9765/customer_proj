@@ -14,7 +14,6 @@
 #include "syscfg.h"
 #include "clock_app.h"
 #include "hal/pwm.h"
-#include "play_pcmtone.h"
 
 /*======================== 外部符号 ========================*/
 
@@ -34,8 +33,9 @@ extern const lv_img_dsc_t *ui_imgset_iconBat[];
 /* 页面跳转 */
 extern void lv_page_select(uint8_t page);
 
-/* 格式化 SD 卡（你自己实现，暂时可空函数占位） */
+/* 格式化 SD 卡（atfs_test.c内包含实现） */
 extern void format_sdcard(void);
+
 
 /*======================== 本文件全局 ========================*/
 
@@ -82,23 +82,7 @@ static lv_style_t labelStyle;
 
 /*======================== 二级菜单文本表 ========================*/
 
-/* 语言：中文 / English */
-static const char *lang_opts[]      = { "中文", "English" };
-
-/* 亮度：1~5 档 */
-static const char *bright_opts[]    = { "1", "2", "3", "4", "5" };
-
-/* 自动关机：关、1、3、5、10 分钟 */
-static const char *autooff_opts[]   = { "关闭", "1分钟", "3分钟", "5分钟", "10分钟" };
-
-/* 屏幕保护：关、1、3、5、10 分钟 */
-static const char *scrsaver_opts[]  = { "关闭", "1分钟", "3分钟", "5分钟", "10分钟" };
-
-/* 声音：静音、低、中、高 */
-static const char *volume_opts[]    = { "静音", "低", "中", "高" };
-
-/* 格式化：确定 / 取消 */
-static const char *format_opts[]    = { "确定", "取消" };
+/* 这些字符串数组现在动态从语言资源获取 */
 
 /*======================== 辅助函数声明 ========================*/
 
@@ -106,6 +90,12 @@ static void update_setting_highlight(void);
 static void update_sub_highlight(void);
 static void create_submenu(uint8_t main_index);
 static void setting_apply_sub_choice(void);
+
+/* 获取动态语言字符串数组的函数 */
+static const char** get_submenu_options(uint8_t menu_id, uint8_t *count);
+
+/* 刷新设置菜单文本的函数 */
+static void refresh_setting_menu_texts(void);
 
 /*======================== 一级菜单高亮 ========================*/
 
@@ -210,7 +200,7 @@ static void create_submenu(uint8_t main_index)
             sub_title = (const char*)ui_language_switch[camSetParam.languageType][LANGUAGE_STR];
             break;
         case SETMENU_BRIGHTNESS:
-            sub_title = "亮度";
+            sub_title = (const char*)ui_language_switch[camSetParam.languageType][XN_BRIGHTNESS_STR];
             break;
         case SETMENU_SLEEP:
             sub_title = (const char*)ui_language_switch[camSetParam.languageType][XN_AUTOOFF_STR];
@@ -241,65 +231,47 @@ static void create_submenu(uint8_t main_index)
     sub_item_cnt       = 0;
     sub_sel_index      = 0;
 
+    /* 使用动态语言获取函数 */
+    table = get_submenu_options(main_index, &sub_item_cnt);
+
+    /* 设置默认选中索引 */
     switch (main_index) {
-    case SETMENU_LANGUAGE:
-        table        = lang_opts;
-        sub_item_cnt = sizeof(lang_opts) / sizeof(lang_opts[0]);
-        sub_sel_index = camSetParam.languageType; /* 0/1 */
-        if (sub_sel_index >= sub_item_cnt) sub_sel_index = 0;
-        break;
-
-    case SETMENU_BRIGHTNESS:
-        table        = bright_opts;
-        sub_item_cnt = sizeof(bright_opts) / sizeof(bright_opts[0]);
-        sub_sel_index = g_brightness_level;       /* 0~4 */
-        if (sub_sel_index >= sub_item_cnt) sub_sel_index = 0;
-        break;
-
-    case SETMENU_SLEEP:
-        table        = autooff_opts;
-        sub_item_cnt = sizeof(autooff_opts) / sizeof(autooff_opts[0]);
-        sub_sel_index = (uint8_t)camSetParam.autOffSet;  /* OFF_TIME 枚举 0~4 */
-        if (sub_sel_index >= sub_item_cnt) sub_sel_index = 0;
-        break;
-
-    case SETMENU_SCREEN_SAVER:
-        table        = scrsaver_opts;
-        sub_item_cnt = sizeof(scrsaver_opts) / sizeof(scrsaver_opts[0]);
-        sub_sel_index = (uint8_t)camSetParam.screenProtectSet; /* PRO_TIME 枚举 0~4 */
-        if (sub_sel_index >= sub_item_cnt) sub_sel_index = 0;
-        break;
-
-    case SETMENU_SOUND:
-        table        = volume_opts;
-        sub_item_cnt = sizeof(volume_opts) / sizeof(volume_opts[0]);
-        sub_sel_index = camSetParam.volumeSet*3;    /* 0~3 */
-        if (sub_sel_index >= sub_item_cnt) sub_sel_index = 0;
-        break;
-
-    case SETMENU_FORMAT:
-        table        = format_opts;
-        sub_item_cnt = sizeof(format_opts) / sizeof(format_opts[0]);
-        sub_sel_index = 1;                        /* 默认选“取消” */
-        break;
-
-    case SETMENU_VERSION:
-    {
-        /* 版本信息：单行文本 */
-        lv_obj_t *label = lv_label_create(subMenuContainer);
-        lv_label_set_text(label, "DJJ Ver: 1.0.0-2025-12-04"); /* 这里换成真实版本字符串 */
-        lv_obj_set_style_text_color(label, lv_color_hex(0xFFFFFF), 0);
-        lv_obj_set_style_text_font(label, &alifangyuan16, 0);
-        lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
-        sub_item_cnt = 0;
-        return;
+        case SETMENU_LANGUAGE:
+            sub_sel_index = camSetParam.languageType; /* 0/1 */
+            break;
+        case SETMENU_BRIGHTNESS:
+            sub_sel_index = g_brightness_level;       /* 0~4 */
+            break;
+        case SETMENU_SLEEP:
+            sub_sel_index = (uint8_t)camSetParam.autOffSet;  /* OFF_TIME 枚举 0~4 */
+            break;
+        case SETMENU_SCREEN_SAVER:
+            sub_sel_index = (uint8_t)camSetParam.screenProtectSet; /* PRO_TIME 枚举 0~4 */
+            break;
+        case SETMENU_SOUND:
+            sub_sel_index = camSetParam.volumeSet;    /* 0~3 */
+            if (sub_sel_index >= sub_item_cnt) sub_sel_index = 1; /* 如果超出范围，默认选"低" */
+            break;
+        case SETMENU_FORMAT:
+            sub_sel_index = 1;                        /* 默认选"取消" */
+            break;
+        default:
+            sub_sel_index = 0;
+            break;
     }
 
-    default:
-        break;
-    }
+    if (sub_sel_index >= sub_item_cnt) sub_sel_index = 0;
 
     if (table == NULL || sub_item_cnt == 0) {
+        /* 检查是否是版本信息页面 */
+        if (main_index == SETMENU_VERSION) {
+            /* 版本信息：单行文本 */
+            lv_obj_t *label = lv_label_create(subMenuContainer);
+            lv_label_set_text(label, "DJJ Ver: 1.0.0-2025-12-04"); /* 这里换成真实版本字符串 */
+            lv_obj_set_style_text_color(label, lv_color_hex(0x666666), 0);
+            lv_obj_set_style_text_font(label, &alifangyuan16, 0);
+            lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+        }
         return;
     }
 
@@ -316,7 +288,7 @@ static void create_submenu(uint8_t main_index)
         lv_obj_t *label = lv_label_create(btn);
         sub_labels[i] = label;
         lv_label_set_text(label, table[i]);
-        lv_obj_set_style_text_font(label, &alifangyuan16, 0);
+        lv_obj_set_style_text_font(label, &djj18bit1, 0);
         lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);  // 改为居中显示
 
         if (i < sub_item_cnt - 1) {
@@ -337,8 +309,27 @@ static void setting_apply_sub_choice(void)
 {
     switch (cur_sub_id) {
     case SETMENU_LANGUAGE:
-        camSetParam.languageType = sub_sel_index;         /* 0:中文, 1:English */
-        break;
+{
+    uint8_t old_language = camSetParam.languageType;
+    camSetParam.languageType = sub_sel_index;         /* 0:English, 1:Chinese */
+
+    /* 如果语言发生了变化，需要刷新界面 */
+    if (old_language != camSetParam.languageType) {
+        printf("语言切换: %s -> %s\n",
+               (old_language == 0) ? "English" : "中文",
+               (camSetParam.languageType == 0) ? "English" : "中文");
+
+        /* 重新创建菜单以显示新语言 */
+        if (in_subpage) {
+            /* 如果在二级菜单中，重新创建当前二级菜单 */
+            create_submenu(cur_sub_id);
+        } else {
+            /* 如果在一级菜单，重新创建一级菜单 */
+            ui_settingPage_screen_init();
+        }
+    }
+}
+break;
 
     case SETMENU_BRIGHTNESS:
         {
@@ -350,13 +341,6 @@ static void setting_apply_sub_choice(void)
 
     case SETMENU_SLEEP:
         camSetParam.autOffSet = (OFF_TIME)sub_sel_index;  /* 0~4 */
-		
-		// 设置具体时间（秒）
-//        uint16_t autooff_times[] = {0, 60, 180, 300};  //关、1分钟、3分钟、5分钟
-//        set_autoPowerOff_times(autooff_times[sub_sel_index]);
-//        // 保存设置到Flash
-//        fly_info_save();
-	  
         break;
 
     case SETMENU_SCREEN_SAVER:
@@ -371,7 +355,7 @@ static void setting_apply_sub_choice(void)
 
     case SETMENU_FORMAT:
         if (sub_sel_index == 0) {
-            /* 选中了“确定” */
+            /* 选中了"确定" - 执行增强版格式化操作 */
             format_sdcard();
         }
         break;
@@ -386,6 +370,107 @@ static void setting_apply_sub_choice(void)
 
     /* 如果有保存到 Flash 的函数，可以在这里调用一次，比如：
        save_cam_settings(); */
+}
+
+/*======================== 动态语言字符串获取 ========================*/
+
+static const char** get_submenu_options(uint8_t menu_id, uint8_t *count)
+{
+    /* 动态数组，在栈上分配 */
+    static const char* lang_options[2];
+    static const char* autooff_options[5];
+    static const char* scrsaver_options[5];
+    static const char* volume_options[4];
+    static const char* format_options[5];
+
+    static const char* bright_options[] = { "1", "2", "3", "4", "5" };
+
+    /* 根据当前语言设置动态填充数组 */
+    lang_options[0] = (const char*)ui_language_switch[camSetParam.languageType][LANGUAGE_EN_STR];
+    lang_options[1] = (const char*)ui_language_switch[camSetParam.languageType][LANGUAGE_CN_STR];
+
+    autooff_options[0] = (const char*)ui_language_switch[camSetParam.languageType][OPT_CLOSE_STR];
+    autooff_options[1] = (const char*)ui_language_switch[camSetParam.languageType][OPT_1MIN_STR];
+    autooff_options[2] = (const char*)ui_language_switch[camSetParam.languageType][OPT_3MIN_STR];
+    autooff_options[3] = (const char*)ui_language_switch[camSetParam.languageType][OPT_5MIN_STR];
+    autooff_options[4] = (const char*)ui_language_switch[camSetParam.languageType][OPT_10MIN_STR];
+
+    scrsaver_options[0] = (const char*)ui_language_switch[camSetParam.languageType][OPT_CLOSE_STR];
+    scrsaver_options[1] = (const char*)ui_language_switch[camSetParam.languageType][OPT_1MIN_STR];
+    scrsaver_options[2] = (const char*)ui_language_switch[camSetParam.languageType][OPT_3MIN_STR];
+    scrsaver_options[3] = (const char*)ui_language_switch[camSetParam.languageType][OPT_5MIN_STR];
+    scrsaver_options[4] = (const char*)ui_language_switch[camSetParam.languageType][OPT_10MIN_STR];
+
+    volume_options[0] = (const char*)ui_language_switch[camSetParam.languageType][OPT_MUTE_STR];
+    volume_options[1] = (const char*)ui_language_switch[camSetParam.languageType][OPT_LOW_STR];
+    volume_options[2] = (const char*)ui_language_switch[camSetParam.languageType][OPT_MEDIUM_STR];
+    volume_options[3] = (const char*)ui_language_switch[camSetParam.languageType][OPT_HIGH_STR];
+
+    format_options[0] = (const char*)ui_language_switch[camSetParam.languageType][OPT_CONFIRM_STR];
+    format_options[1] = (const char*)ui_language_switch[camSetParam.languageType][OPT_CANCEL_STR];
+
+    switch (menu_id) {
+        case SETMENU_LANGUAGE:
+            *count = 2;
+            return lang_options;
+
+        case SETMENU_BRIGHTNESS:
+            *count = 5;
+            return bright_options;
+
+        case SETMENU_SLEEP:
+            *count = 5;
+            return autooff_options;
+
+        case SETMENU_SCREEN_SAVER:
+            *count = 5;
+            return scrsaver_options;
+
+        case SETMENU_SOUND:
+            *count = 4;
+            return volume_options;
+
+        case SETMENU_FORMAT:
+            *count = 2;
+            return format_options;
+
+        default:
+            *count = 0;
+            return NULL;
+    }
+}
+
+/*======================== 刷新设置菜单文本 ========================*/
+
+static void refresh_setting_menu_texts(void)
+{
+    int i;
+
+    /* 更新一级菜单文本 */
+    const char *setting_texts[SETMENU_MAX];
+    setting_texts[SETMENU_LANGUAGE]     = (const char*)ui_language_switch[camSetParam.languageType][LANGUAGE_STR];
+    setting_texts[SETMENU_BRIGHTNESS]   = (const char*)ui_language_switch[camSetParam.languageType][XN_BRIGHTNESS_STR];
+    setting_texts[SETMENU_SLEEP]        = (const char*)ui_language_switch[camSetParam.languageType][XN_AUTOOFF_STR];
+    setting_texts[SETMENU_SCREEN_SAVER] = (const char*)ui_language_switch[camSetParam.languageType][XN_SCREENPR_STR];
+    setting_texts[SETMENU_SOUND]        = (const char*)ui_language_switch[camSetParam.languageType][XN_VOLUME_STR];
+    setting_texts[SETMENU_FORMAT]       = (const char*)ui_language_switch[camSetParam.languageType][FORMAT_STR];
+    setting_texts[SETMENU_VERSION]      = (const char*)ui_language_switch[camSetParam.languageType][XN_VERSION_STR];
+
+    /* 更新一级菜单标签 */
+    for (i = 0; i < SETMENU_MAX; i++) {
+        if (setting_labels[i]) {
+            lv_label_set_text(setting_labels[i], setting_texts[i]);
+        }
+    }
+
+    /* 更新顶部标题 */
+    if (titleLabel && !in_subpage) {
+        lv_label_set_text(titleLabel,
+            (const char*)ui_language_switch[camSetParam.languageType][SETTING_STR]);
+    }
+
+    printf("一级菜单文本已刷新为: %s\n",
+           camSetParam.languageType == 0 ? "English" : "中文");
 }
 
 /*======================== 按键事件回调 ========================*/
@@ -507,6 +592,12 @@ void ui_event_settPage(lv_event_t * e)
         }
         if (menuContainer)
             lv_obj_clear_flag(menuContainer, LV_OBJ_FLAG_HIDDEN);
+
+        /* 如果是语言设置，需要刷新一级菜单的显示文本 */
+        if (cur_sub_id == SETMENU_LANGUAGE) {
+            refresh_setting_menu_texts();
+        }
+
         update_setting_highlight();
         break;
 
@@ -574,7 +665,7 @@ void ui_settingPage_screen_init(void)
     /* 文本样式（未选中灰色） */
     lv_style_init(&labelStyle);
     lv_style_set_text_color(&labelStyle, lv_color_hex(0x666666));  // 文本颜色
-    lv_style_set_text_font(&labelStyle, &alifangyuan16);
+    lv_style_set_text_font(&labelStyle, &djj18bit1);
 
     /* 根对象 */
     ui_settingPage = lv_obj_create(lv_scr_act());
@@ -630,7 +721,7 @@ void ui_settingPage_screen_init(void)
     /* 一级菜单文本（多语言） */
     const char *setting_texts[SETMENU_MAX];
     setting_texts[SETMENU_LANGUAGE]     = (const char*)ui_language_switch[camSetParam.languageType][LANGUAGE_STR];
-    setting_texts[SETMENU_BRIGHTNESS]   = "亮度";
+    setting_texts[SETMENU_BRIGHTNESS]   = (const char*)ui_language_switch[camSetParam.languageType][XN_BRIGHTNESS_STR];
     setting_texts[SETMENU_SLEEP]        = (const char*)ui_language_switch[camSetParam.languageType][XN_AUTOOFF_STR];
     setting_texts[SETMENU_SCREEN_SAVER] = (const char*)ui_language_switch[camSetParam.languageType][XN_SCREENPR_STR];
     setting_texts[SETMENU_SOUND]        = (const char*)ui_language_switch[camSetParam.languageType][XN_VOLUME_STR];

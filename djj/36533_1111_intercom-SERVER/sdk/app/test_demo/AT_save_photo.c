@@ -7,7 +7,6 @@
 #include "osal/task.h"
 #include "osal_file.h"
 #include "video_app/video_app.h"
-#include "fatfs/ff.h"
 
 void at_save_photo_thread(void *d);
 struct AT_PHOTO
@@ -20,7 +19,6 @@ struct AT_PHOTO
 };
 
 static struct AT_PHOTO *photo_s = NULL;
-
 int32 demo_atcmd_save_photo(const char *cmd, char *argv[], uint32 argc)
 {
 	#if OPENDML_EN &&  SDH_EN && FS_EN
@@ -132,27 +130,16 @@ void at_save_photo_thread(void *d)
     stream *s = NULL;
     uint32_t flen;
     char filename[64] = {0};
-	
-	// 检查SD卡状态
-    uint8_t sd_status = get_sd_status();
-    os_printf("SD card status: %d (0=IDLE, 3=OFF)\n", sd_status);
-
-    if(sd_status == 3) {
-        os_printf("SD card not detected!\n");
-        goto at_save_photo_thread_end;
-    }
-	
     s = open_stream_available(R_AT_SAVE_PHOTO,0,8,opcode_func,NULL);
     if(!s)
-    {   
-		printf("No photo stream!\r\n");
+    {
         goto at_save_photo_thread_end;
     }
     p_s->running = 1;
     void *fp = NULL;
     uint32_t err_count = 0;
 	
-	// 添加目录创建
+	// 添加目录创建(否则格式化之后路径会消失，需要重新创建)
     DIR dir;
     FRESULT ret = f_opendir(&dir, "0:/DCIM");
     if(ret != FR_OK){
@@ -169,45 +156,17 @@ void at_save_photo_thread(void *d)
         if(get_f)
         {
             err_count = 0;
-            
-			os_sprintf(filename,"0:/DCIM/%sJPEG%04d.jpg",p_s->filename_prefix,(uint32_t)os_jiffies()%9999);
+            os_sprintf(filename,"0:/DCIM/%sJPEG%04d.jpg",p_s->filename_prefix,(uint32_t)os_jiffies()%9999);
             os_printf("filename:%s\n",filename);
             fp = osal_fopen(filename,"wb+");
             if(!fp)
             {
                 os_printf("filename: fp err !!!!!!\n");
-                free_data(get_f);
-				get_f = NULL;
-				p_s->photo_num--;
-				continue;  // 继续而不是goto end
+                goto at_save_photo_thread_end;
             }
             flen = get_stream_real_data_len(get_f);
             no_frame_record_video2(fp,get_f,flen);
-
-			
-
-//			 // ===== 使用sd_save.c中的函数 =====
-//              extern void *creat_takephoto_file(char *dir_name);
-//              extern char *JPG_FILE_NAME;
-//
-//              // 设置文件名前缀（可选，如果需要的话）
-//              // p_s->filename_prefix 在这里是 "BBM"
-//
-//              fp = creat_takephoto_file("0:/DCIM");  // 使用验证过的函数
-//              if(!fp)
-//              {
-//                  os_printf("creat_takephoto_file failed!\n");
-//                  free_data(get_f);
-//                  get_f = NULL;
-//                  p_s->photo_num--;
-//                  continue;
-//              }
-//
-//              // 创建成功，继续写入数据
-//              no_frame_record_video_psram(fp,get_f,get_stream_real_data_len(get_f));
-			  //========================================================
-            
-			free_data(get_f);
+            free_data(get_f);
             get_f = NULL;
             osal_fclose(fp);
             p_s->photo_num--;

@@ -14,6 +14,7 @@
 #include "syscfg.h"
 #include "clock_app.h"
 #include "hal/pwm.h"
+#include "play_pcmtone.h"
 
 /*======================== 外部符号 ========================*/
 
@@ -349,6 +350,13 @@ static void setting_apply_sub_choice(void)
 
     case SETMENU_SLEEP:
         camSetParam.autOffSet = (OFF_TIME)sub_sel_index;  /* 0~4 */
+		
+		// 设置具体时间（秒）
+//        uint16_t autooff_times[] = {0, 60, 180, 300};  //关、1分钟、3分钟、5分钟
+//        set_autoPowerOff_times(autooff_times[sub_sel_index]);
+//        // 保存设置到Flash
+//        fly_info_save();
+	  
         break;
 
     case SETMENU_SCREEN_SAVER:

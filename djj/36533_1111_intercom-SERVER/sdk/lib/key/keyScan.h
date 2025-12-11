@@ -28,8 +28,8 @@ enum
   AD_RIGHT,     // SW7向下键(51K) → 右键功能
   AD_VOL_UP,    // SW4音量+键(5.1K) → 音量增加功能
   AD_VOL_DOWN,  // SW5音量-键(30K) → 音量减少功能
-  AD_PRESS,     // SW3确认键(0Ω) → OK确认功能
   AD_BACK,      // SW9返回键(100K) → 返回功能
+  AD_PRESS,     // SW3确认键(0Ω) → OK确认功能
   
   // GPIO按键
   KEY_CALL,     // PA14发射键

@@ -268,23 +268,23 @@ void ui_albumPage_screen_init(){
 	lv_obj_set_style_pad_top(ui_albumTopBar, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
 	lv_obj_set_style_pad_bottom(ui_albumTopBar, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
 
-	// ui_aSdIconImg = lv_img_create(ui_albumTopBar);
-	// lv_img_set_src(ui_aSdIconImg, &ui_img_img_icon32x32_sdicon_32x32_png);
-	// lv_obj_set_width( ui_aSdIconImg, LV_SIZE_CONTENT);  /// 1
-	// lv_obj_set_height( ui_aSdIconImg, LV_SIZE_CONTENT);   /// 1
-	// lv_obj_set_x( ui_aSdIconImg, 32 );
-	// lv_obj_set_y( ui_aSdIconImg, 0 );
-	// lv_obj_add_flag( ui_aSdIconImg, LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
-	// lv_obj_clear_flag( ui_aSdIconImg, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-
-	// ui_aSdStaLabel = lv_label_create(ui_aSdIconImg);
-	// lv_obj_set_width( ui_aSdStaLabel, LV_SIZE_CONTENT);  /// 1
-	// lv_obj_set_height( ui_aSdStaLabel, LV_SIZE_CONTENT);   /// 1
-	// lv_obj_set_align( ui_aSdStaLabel, LV_ALIGN_CENTER );
-	// lv_label_set_text(ui_aSdStaLabel,LV_SYMBOL_OK); //""
-	// lv_obj_set_style_text_color(ui_aSdStaLabel, lv_color_hex(0x05F80A), LV_PART_MAIN | LV_STATE_DEFAULT );
-	// lv_obj_set_style_text_opa(ui_aSdStaLabel, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-	
+//	 ui_aSdIconImg = lv_img_create(ui_albumTopBar);
+//	 lv_img_set_src(ui_aSdIconImg, &ui_img_img_icon32x32_sdicon_32x32_png);
+//	 lv_obj_set_width( ui_aSdIconImg, LV_SIZE_CONTENT);  /// 1
+//	 lv_obj_set_height( ui_aSdIconImg, LV_SIZE_CONTENT);   /// 1
+//	 lv_obj_set_x( ui_aSdIconImg, 32 );
+//	 lv_obj_set_y( ui_aSdIconImg, 0 );
+//	 lv_obj_add_flag( ui_aSdIconImg, LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
+//	 lv_obj_clear_flag( ui_aSdIconImg, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+//
+//	 ui_aSdStaLabel = lv_label_create(ui_aSdIconImg);
+//	 lv_obj_set_width( ui_aSdStaLabel, LV_SIZE_CONTENT);  /// 1
+//	 lv_obj_set_height( ui_aSdStaLabel, LV_SIZE_CONTENT);   /// 1
+//	 lv_obj_set_align( ui_aSdStaLabel, LV_ALIGN_CENTER );
+//	 lv_label_set_text(ui_aSdStaLabel,LV_SYMBOL_OK); //""
+//	 lv_obj_set_style_text_color(ui_aSdStaLabel, lv_color_hex(0x05F80A), LV_PART_MAIN | LV_STATE_DEFAULT );
+//	 lv_obj_set_style_text_opa(ui_aSdStaLabel, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+//	
 	ui_aSdIconImg = lv_img_create(ui_albumTopBar);
 	lv_img_set_src(ui_aSdIconImg, &iconSdc);
 	lv_obj_set_width( ui_aSdIconImg, LV_SIZE_CONTENT);  /// 1
@@ -383,8 +383,10 @@ void ui_albumPage_screen_init(){
     lv_obj_align(ui_albumPrevBtn,LV_ALIGN_LEFT_MID,0,0);
 	lv_obj_set_style_bg_opa(ui_albumPrevBtn, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
 	lv_obj_set_style_border_width(ui_albumPrevBtn, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
-	lv_obj_set_style_bg_img_src( ui_albumPrevBtn, ui_imgset_iconPrev[0], LV_PART_MAIN | LV_STATE_DEFAULT );
-
+//	lv_obj_set_style_bg_img_src( ui_albumPrevBtn, ui_imgset_iconPrev[0], LV_PART_MAIN | LV_STATE_DEFAULT );
+  // 替换为透明背景或纯色背景
+  lv_obj_set_style_bg_img_src(ui_albumPage, NULL, 0);  // 移除背景图片
+  lv_obj_set_style_bg_color(ui_albumPage, lv_color_hex(0x000000), 0);  // 设置黑色背景
 
 	ui_albumNextBtn = lv_obj_create(ui_albumPage);
 	lv_obj_set_width( ui_albumNextBtn, 28);
@@ -445,21 +447,21 @@ void ui_albumPage_screen_init(){
 	lv_label_set_recolor(ui_dialogContent, 1);
 	lv_label_set_text(ui_dialogContent,"SD卡 #ff0088 格式化成功#");
 
-    // lv_obj_t *btn_cancel = lv_btn_create(ui_dialogPanel);
-    // lv_obj_set_size(btn_cancel, 36, 26);  
-	// lv_obj_set_align( btn_cancel, LV_ALIGN_BOTTOM_LEFT );
+     lv_obj_t *btn_cancel = lv_btn_create(ui_dialogPanel);
+     lv_obj_set_size(btn_cancel, 36, 26);  
+	 lv_obj_set_align( btn_cancel, LV_ALIGN_BOTTOM_LEFT );
 
-	// lv_obj_t *label_cancel = lv_label_create(btn_cancel);
-    // lv_label_set_text(label_cancel, "取消");
-	// lv_obj_set_align( label_cancel, LV_ALIGN_CENTER );
+	lv_obj_t *label_cancel = lv_label_create(btn_cancel);
+     lv_label_set_text(label_cancel, "取消");
+	 lv_obj_set_align( label_cancel, LV_ALIGN_CENTER );
 
-    // lv_obj_t *btn_confirm = lv_btn_create(ui_dialogPanel);
-    // lv_obj_set_size(btn_confirm, 36, 26);  
-	// lv_obj_set_align( btn_confirm, LV_ALIGN_BOTTOM_RIGHT );
+    lv_obj_t *btn_confirm = lv_btn_create(ui_dialogPanel);
+     lv_obj_set_size(btn_confirm, 36, 26);  
+	 lv_obj_set_align( btn_confirm, LV_ALIGN_BOTTOM_RIGHT );
 	
-    // lv_obj_t *label_confirm = lv_label_create(btn_confirm);
-    // lv_label_set_text(label_confirm, "继续");
-	// lv_obj_set_align( label_confirm, LV_ALIGN_CENTER );
+    lv_obj_t *label_confirm = lv_label_create(btn_confirm);
+     lv_label_set_text(label_confirm, "继续");
+	 lv_obj_set_align( label_confirm, LV_ALIGN_CENTER );
 
 	#endif
 

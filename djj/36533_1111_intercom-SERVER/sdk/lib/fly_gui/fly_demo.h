@@ -2,8 +2,8 @@
 #define _FLY_DEMO_
 
 #define BABY_UI_MAGICSOUND
-#define DISPLAY_DEBUGINFO_ENABLE
-//#define AUTO_POWER_OFF_ENABLE
+//#define DISPLAY_DEBUGINFO_ENABLE
+#define AUTO_POWER_OFF_ENABLE
 
 
 struct lv_time {

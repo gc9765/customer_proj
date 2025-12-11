@@ -501,8 +501,8 @@ void batteryStatusProcess(void)
           lv_img_set_src(ui_homeBatImg, ui_imgset_iconBat[bt_status]);
 	else if(camera_gvar.page_cur == PAGE_INTERCOM)//photo
 		lv_img_set_src(ui_intercomBatImg, ui_imgset_iconBat[bt_status]);
-	 else if(camera_gvar.page_cur == PAGE_CAMERA)//photo
-	 	lv_img_set_src(ui_camBatImg, ui_imgset_iconBat[bt_status]);
+//	 else if(camera_gvar.page_cur == PAGE_CAMERA)//photo
+//	 	lv_img_set_src(ui_camBatImg, ui_imgset_iconBat[bt_status]);
 	 else if(camera_gvar.page_cur == PAGE_ALBUM)//playback
 	 	lv_img_set_src(ui_albumBatImg, ui_imgset_iconBat[bt_status]);
 	//else if(camera_gvar.page_cur == PAGE_VIDEO)//rec
@@ -563,16 +563,16 @@ void sdcStatusProcess(void)
 
 		if(camera_gvar.page_cur == PAGE_INTERCOM)//photo
 			lv_obj_clear_flag( ui_isdIconImg, LV_OBJ_FLAG_HIDDEN );   /// Flags 
-		 else if(camera_gvar.page_cur == PAGE_CAMERA)//photo
-		 	lv_obj_clear_flag( ui_csdIconImg, LV_OBJ_FLAG_HIDDEN );   /// Flags 
+//		 else if(camera_gvar.page_cur == PAGE_CAMERA)//photo
+//		 	lv_obj_clear_flag( ui_csdIconImg, LV_OBJ_FLAG_HIDDEN );   /// Flags 
 		 else if(camera_gvar.page_cur == PAGE_ALBUM)//playback
 		 	lv_obj_clear_flag( ui_aSdIconImg, LV_OBJ_FLAG_HIDDEN );   /// Flags 
 		// else if(camera_gvar.page_cur == PAGE_VIDEO)//rec
 		// 	lv_obj_clear_flag( ui_vsdIconImg, LV_OBJ_FLAG_HIDDEN );   /// Flags 
 		// else if(camera_gvar.page_cur == PAGE_MUSIC)//music
 		// 	lv_obj_clear_flag( ui_msdIconImg, LV_OBJ_FLAG_HIDDEN );    /// Flags
-		else if(camera_gvar.page_cur == PAGE_SET)//sett
-		lv_obj_clear_flag(ui_settBatImg, ui_imgset_iconBat[b_sta]);
+//		else if(camera_gvar.page_cur == PAGE_SET)//sett
+//		lv_obj_clear_flag(ui_settBatImg, ui_imgset_iconBat[b_sta]);
 		//else if(camera_gvar.page_cur == PAGE_GAME)//game
 		//lv_obj_clear_flag(ui_gameBatImg, ui_imgset_iconBat[bt_status]);
 
@@ -582,16 +582,16 @@ void sdcStatusProcess(void)
 		
 		if(camera_gvar.page_cur == PAGE_INTERCOM)//photo
 			lv_obj_add_flag( ui_isdIconImg, LV_OBJ_FLAG_HIDDEN );   /// Flags 
-		else if(camera_gvar.page_cur == PAGE_CAMERA)//photo
-			lv_obj_add_flag( ui_csdIconImg, LV_OBJ_FLAG_HIDDEN );   /// Flags 
+//		else if(camera_gvar.page_cur == PAGE_CAMERA)//photo
+//			lv_obj_add_flag( ui_csdIconImg, LV_OBJ_FLAG_HIDDEN );   /// Flags 
 		else if(camera_gvar.page_cur == PAGE_ALBUM)//playback
 			lv_obj_add_flag( ui_aSdIconImg, LV_OBJ_FLAG_HIDDEN );   /// Flags 
 		// else if(camera_gvar.page_cur == PAGE_VIDEO)//rec
 		// 	lv_obj_add_flag( ui_vsdIconImg, LV_OBJ_FLAG_HIDDEN );   /// Flags 
 		// else if(camera_gvar.page_cur == PAGE_MUSIC)//music
 		// 	lv_obj_add_flag( ui_msdIconImg, LV_OBJ_FLAG_HIDDEN );    /// Flags
-		else if(camera_gvar.page_cur == PAGE_SET)//sett
-		lv_obj_clear_flag(ui_settBatImg, ui_imgset_iconBat[b_sta]);
+//		else if(camera_gvar.page_cur == PAGE_SET)//sett
+//		lv_obj_clear_flag(ui_settBatImg, ui_imgset_iconBat[b_sta]);
 		//else if(camera_gvar.page_cur == PAGE_GAME)//game
 		//lv_obj_clear_flag(ui_gameBatImg, ui_imgset_iconBat[bt_status]);
 
@@ -1321,7 +1321,7 @@ void timer_event(){
 
 		//	wifi_connect_process();
 		// noticeDisplayProcess();
-		 sdcStatusProcess();   
+//		 sdcStatusProcess();   
 		//date_time_display();
 
 		if(camera_gvar.welcome_times)

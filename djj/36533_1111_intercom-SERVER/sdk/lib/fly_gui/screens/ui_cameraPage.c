@@ -259,7 +259,9 @@ void ui_event_cameraPage(lv_event_t * e){
 				if(!get_takephoto_thread_status())
 				{
 					take_photo_thread_init(gui_cfg.photo_w,gui_cfg.photo_h,gui_cfg.take_photo_num);
-
+					/*came界面 拍照按键声音*/
+					play_pcmtone(&shottone);
+					/*came界面 拍照按键声音*/
 					takePhotoAnimationStart();
 				}
 				else
@@ -430,7 +432,7 @@ void ui_cameraPage_screen_init(){
 	lv_obj_set_style_text_opa(ui_cSdStaLabel, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 	lv_obj_set_style_text_font(ui_cSdStaLabel, &lv_font_montserrat_14, LV_PART_MAIN| LV_STATE_DEFAULT);
 #endif
-#if 1
+#if 0
 	ui_camIconImg = lv_img_create(ui_camTopBar);
 	lv_img_set_src(ui_camIconImg, &iconFlagPhoto);
 	lv_obj_set_width( ui_camIconImg, LV_SIZE_CONTENT);  /// 1
@@ -485,18 +487,19 @@ void ui_cameraPage_screen_init(){
 	lv_obj_set_style_pad_bottom(ui_camBtmBar, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 #if 0
-	ui_cTimeIconLabel = lv_label_create(ui_camBtmBar);
-	lv_obj_set_width( ui_cTimeIconLabel, LV_SIZE_CONTENT);  /// 1
-	lv_obj_set_height( ui_cTimeIconLabel, LV_SIZE_CONTENT);   /// 1
-	lv_obj_set_align( ui_cTimeIconLabel, LV_ALIGN_BOTTOM_LEFT );
-	//lv_label_set_text(ui_cTimeIconLabel,"2023/11/30 14:59:48");
-	lv_obj_set_style_text_color(ui_cTimeIconLabel, lv_color_hex(0xF8D00B), LV_PART_MAIN | LV_STATE_DEFAULT );
-	lv_obj_set_style_text_opa(ui_cTimeIconLabel, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
-	lv_obj_set_style_text_font(ui_cTimeIconLabel, &lv_font_montserrat_16, LV_PART_MAIN| LV_STATE_DEFAULT);
-	lv_clock_display(ui_cTimeIconLabel,&sw_rtc,NULL);
+//	ui_cTimeIconLabel = lv_label_create(ui_camBtmBar);
+//	lv_obj_set_width( ui_cTimeIconLabel, LV_SIZE_CONTENT);  /// 1
+//	lv_obj_set_height( ui_cTimeIconLabel, LV_SIZE_CONTENT);   /// 1
+//	lv_obj_set_align( ui_cTimeIconLabel, LV_ALIGN_BOTTOM_LEFT );
+//	//lv_label_set_text(ui_cTimeIconLabel,"2023/11/30 14:59:48");
+//	lv_obj_set_style_text_color(ui_cTimeIconLabel, lv_color_hex(0xF8D00B), LV_PART_MAIN | LV_STATE_DEFAULT );
+//	lv_obj_set_style_text_opa(ui_cTimeIconLabel, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+//	lv_obj_set_style_text_font(ui_cTimeIconLabel, &lv_font_montserrat_16, LV_PART_MAIN| LV_STATE_DEFAULT);
+//	lv_clock_display(ui_cTimeIconLabel,&sw_rtc,NULL);
 
 #endif
 	
+	// 录制时间
 	ui_RecTimeIconLabel = lv_label_create(ui_camBtmBar);
 	lv_obj_set_width( ui_RecTimeIconLabel, LV_SIZE_CONTENT);  /// 1
 	lv_obj_set_height( ui_RecTimeIconLabel, LV_SIZE_CONTENT);   /// 1
@@ -520,13 +523,13 @@ void ui_cameraPage_screen_init(){
 	// lv_obj_set_style_text_opa(ui_photoQualityLabel, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 	// lv_obj_set_style_text_font(ui_photoQualityLabel, &lv_font_montserrat_20, LV_PART_MAIN| LV_STATE_DEFAULT);
 
-	//lv_obj_add_event_cb(ui_cameraPage, ui_event_cameraPage, LV_EVENT_ALL, NULL);
-	// ui_focusBtn = lv_imgbtn_create(ui_cameraPage);
-	// lv_imgbtn_set_src(ui_focusBtn, LV_IMGBTN_STATE_RELEASED, NULL, &iconFocus, NULL);
-	// lv_imgbtn_set_src(ui_focusBtn, LV_IMGBTN_STATE_PRESSED, NULL, &iconFocusP, NULL);
-	// lv_obj_set_width( ui_focusBtn, 168);
-	// lv_obj_set_height( ui_focusBtn, 128);
-	// lv_obj_set_align( ui_focusBtn, LV_ALIGN_CENTER );
+	lv_obj_add_event_cb(ui_cameraPage, ui_event_cameraPage, LV_EVENT_ALL, NULL);
+	 ui_focusBtn = lv_imgbtn_create(ui_cameraPage);
+	 lv_imgbtn_set_src(ui_focusBtn, LV_IMGBTN_STATE_RELEASED, NULL, &iconFocus, NULL);
+	 lv_imgbtn_set_src(ui_focusBtn, LV_IMGBTN_STATE_PRESSED, NULL, &iconFocusP, NULL);
+	 lv_obj_set_width( ui_focusBtn, 168);
+	 lv_obj_set_height( ui_focusBtn, 128);
+	 lv_obj_set_align( ui_focusBtn, LV_ALIGN_CENTER );
 
 
 	ui_focusImg = lv_img_create(ui_cameraPage);
@@ -540,7 +543,7 @@ void ui_cameraPage_screen_init(){
 	lv_obj_add_flag( ui_focusImg, LV_OBJ_FLAG_HIDDEN );   /// Flags
 
 
-	#if 1// notic dialog
+	#if 0// notic dialog
 	ui_dialogPanel = lv_obj_create(ui_cameraPage);
 	lv_obj_set_width( ui_dialogPanel, 160);
 	lv_obj_set_height( ui_dialogPanel, 120);

@@ -60,8 +60,6 @@
 #include "flashdisk/flashdisk.h"
 #include "osal_file.h"
 
-#include "hal/audac.h"
-
 #if MP3_EN
 #include "mp3/mp3_decode.h"
 #include "third_audio/libmad/global.h"
@@ -1125,9 +1123,9 @@ void hardware_init(uint8 vcam)
 #endif
 
 #if SDH_EN && FS_EN
-//     extern bool fatfs_register();
-//     sd_open();
-//     fatfs_register();
+     extern bool fatfs_register();
+     sd_open();
+     fatfs_register();
 #endif
 
 #if SD_SAVE

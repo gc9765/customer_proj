@@ -13,8 +13,8 @@
 #define OPUS_CODE   0
 #define ADPCM_CODE  1
 
-#define  FULL_DUPLEX    0
-#define  HALF_DUPLEX    1
+#define  FULL_DUPLEX    1
+#define  HALF_DUPLEX    0
 
 #ifdef PSRAM_HEAP
 #define intercom_malloc custom_malloc_psram
@@ -128,4 +128,7 @@ extern TYPE_INTERCOM_STRUCT *intercom;
 extern void intercom_init(void);
 void encode_sema_up();
 void intercom_encode_switch(uint8 enable);
+
+int intercom_chat_send_raw(const uint8_t *payload, uint16_t len);
+
 #endif

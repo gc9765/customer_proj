@@ -228,10 +228,10 @@ void send_photo_thread()
 	uint8_t los_num;
 	uint8_t mclk_set;
 	struct dvp_device *dvp_dev;
-	dvp_dev = (struct dvp_device *)dev_get(HG_DVP_DEVID);   // 仅获取了摄像头DVP的数据流
+	dvp_dev = (struct dvp_device *)dev_get(HG_DVP_DEVID);
 	uint8 wait_cnt = 0;
 
-start_jpeg();     //开启JPEG图像编解码？
+start_jpeg();
 
     #if PROTOCOL_CLIENT
         #if 0
@@ -820,8 +820,17 @@ void read_protocol_thread(){
 		// 	recv_timeout_cnt = 0;
 		// 	stop_heart_packet = 0;
 		// }
+		static uint32_t print_cnt = 0; 
 
-		if((pro_page_cur == 1 ) && (lcd_pair_success)  )  //PAGE_INTERCOM 界面
+        // 计数器累加
+        print_cnt++;
+		if(print_cnt >= 300) 
+        {
+            print_cnt = 0; // 清零计数器
+            printf("*************************************/////**/*/*/*/*/*/*/\r\n");
+            printf("***********pro_page_cur =%d,lcd_pair_success =%d***********\r\n", pro_page_cur, lcd_pair_success);
+        }
+		if((pro_page_cur == 11 ) && (lcd_pair_success)  )  //PAGE_INTERCOM 界面
         {
             if(ret <= 0) {
                 recv_timeout_cnt++; 
@@ -832,8 +841,7 @@ void read_protocol_thread(){
                 recv_timeout_cnt = 0;
                 photo_flag = 1;
             }  
-			
-			
+	
         }
 
 

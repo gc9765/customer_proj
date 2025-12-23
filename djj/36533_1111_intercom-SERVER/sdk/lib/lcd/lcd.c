@@ -21,6 +21,7 @@
 #include "lib/vef/video_ef.h"
 #include "hal/pwm.h"
 #include "hal/timer_device.h"
+#include "lib/fly_gui/screens/ui_albumPage.h"
 
 uint8_t osd_palette[512]__attribute__ ((aligned(4)));
 
@@ -30,6 +31,7 @@ struct os_msgqueue lcd_vef_msg;
 volatile uint8* lcd_vef_pt;
 uint8 lcd_vef_tmp[120*160*2] __attribute__ ((aligned(4),section(".psram.src")));
 // uint8 lcd_vef_tmp1[240*240*2] __attribute__ ((aligned(4),section(".psram.src")));
+
 
 #if LCD_EN
 #define VIDEO_EN    1
@@ -61,13 +63,26 @@ uint8 video_decode_config_mem1[SCALE_PHOTO1_CONFIG_W*PHOTO1_H+SCALE_PHOTO1_CONFI
 uint8 video_decode_config_mem2[SCALE_PHOTO1_CONFIG_W*PHOTO1_H+SCALE_PHOTO1_CONFIG_W*PHOTO1_H/2] __attribute__ ((aligned(4),section(".psram.src")));
 // uint8 video_decode_config_mem3[SCALE_PHOTO1_CONFIG_W*PHOTO1_H+SCALE_PHOTO1_CONFIG_W*PHOTO1_H/2] __attribute__ ((aligned(4),section(".psram.src")));
 
-
 uint8 *video_decode_mem;
 uint8 *video_decode_mem1;
 uint8 *video_decode_mem2;
 uint8 *video_decode_mem3;
 uint8 *scaler2buf = NULL;
 
+uint8 album_decode_config_mem[SCALE_ALBUM_CONFIG_W * CAMERA_ALBUM_SCALE_H + SCALE_ALBUM_CONFIG_W * CAMERA_ALBUM_SCALE_H/2] __attribute__ ((aligned(4),section(".psram.src")));
+uint8 album_decode_config_mem1[SCALE_ALBUM_CONFIG_W * CAMERA_ALBUM_SCALE_H + SCALE_ALBUM_CONFIG_W * CAMERA_ALBUM_SCALE_H/2] __attribute__ ((aligned(4),section(".psram.src")));
+uint8 album_decode_config_mem2[SCALE_ALBUM_CONFIG_W * CAMERA_ALBUM_SCALE_H + SCALE_ALBUM_CONFIG_W * CAMERA_ALBUM_SCALE_H/2] __attribute__ ((aligned(4),section(".psram.src")));
+// uint8 album_decode_config_mem3[SCALE_ALBUM_CONFIG_W * CAMERA_ALBUM_SCALE_H+SCALE_ALBUM_CONFIG_W * CAMERA_ALBUM_SCALE_H/2] __attribute__ ((aligned(4),section(".psram.src")));
+
+uint8 *album_decode_mem;
+uint8 *album_decode_mem1;
+uint8 *album_decode_mem2;
+uint8 *album_decode_mem3;
+uint8 *album_scaler2buf = NULL;
+
+extern struct os_msgqueue album_yuv_msgq;
+
+extern album_preload_sys_t album_preload_inf;
 extern volatile uint8_t p0p1_switch_flag;
 extern uint8_t osd_encode_buf[200*1024];
 extern uint8_t osd_encode_buf1[200*1024];
@@ -1119,6 +1134,9 @@ void scale2_done(uint32 irq_flag,uint32 irq_data,uint32 param1){
 	struct scale_device *scale_dev = (struct scale_device *)irq_data;
 	jpg_dev = (struct jpg_device *)dev_get(HG_JPG1_DEVID);
 
+	printf("### scale2_done called: album_preload_inf.preload_enabled = %d, decode_num = %d\r\n",
+	       album_preload_inf.preload_enabled, decode_num);
+
 #ifdef P0P1_SWITCH 
 
 if(p0p1_switch_flag)
@@ -1141,11 +1159,68 @@ if(p0p1_switch_flag)
 		// scale_set_out_vaddr(scale_dev,(uint32)video_decode_mem3+scale_p1_w*p1_h+scale_p1_w*p1_h/4);
 	}
 }
-else
 #endif
+else if(album_preload_inf.preload_enabled == 1){
+	// 修复竞争条件：先保存当前decode_num，避免在处理过程中被改变
+	uint32_t current_decode_num = decode_num;
+	uint32_t buffer_index = current_decode_num % 3;
+
+	// 边界检查：确保buffer_index在有效范围内
+	if(buffer_index > 2) {
+		os_printf("ERROR: Invalid buffer_index %d from decode_num %d\r\n", buffer_index, current_decode_num);
+		scale2_finish = 1;
+		return; // 安全退出，避免内存踩踏
+	}
+
+	if(buffer_index == 0){
+		os_printf("decode_num%3 == 0, sending YUV from album_decode_mem\r\n");
+		scale_set_out_yaddr(scale_dev,(uint32)album_decode_mem);
+		scale_set_out_uaddr(scale_dev,(uint32_t)album_decode_mem+scale_p1_w*p1_h);
+		scale_set_out_vaddr(scale_dev,(uint32_t)album_decode_mem+scale_p1_w*p1_h+scale_p1_w*p1_h/4);
+		int ret = os_msgq_put(&album_yuv_msgq, (uint32_t)album_decode_mem2, 0);
+//		int ret = os_msgq_put(&album_yuv_msgq, (uint32_t)album_decode_mem, 0);
+		if(ret != 0) {
+			os_printf("album_yuv_msgq full, drop frame ret=%d\n", ret);
+		}
+	}else if(buffer_index == 1){
+		os_printf("decode_num%3 == 1, sending YUV from album_decode_mem1\r\n");
+		scale_set_out_yaddr(scale_dev,(uint32)album_decode_mem1);
+		scale_set_out_uaddr(scale_dev,(uint32)album_decode_mem1+scale_p1_w*p1_h);
+		scale_set_out_vaddr(scale_dev,(uint32)album_decode_mem1+scale_p1_w*p1_h+scale_p1_w*p1_h/4);
+
+		if(os_msgq_cnt(&album_yuv_msgq) < 8) {
+//			int ret = os_msgq_put(&album_yuv_msgq, (uint32_t)album_decode_mem1, 0);
+			int ret = os_msgq_put(&album_yuv_msgq, (uint32_t)album_decode_mem, 0);
+			if(ret != 0) {
+				os_printf("album_yuv_msgq put failed, drop frame ret=%d\n", ret);
+			}
+		} else {
+			os_printf("album_yuv_msgq almost full, skipping frame to prevent overflow\r\n");
+		}
+	}else if(buffer_index == 2){
+		os_printf("decode_num%3 == 2, sending YUV from album_decode_mem2\r\n");
+		scale_set_out_yaddr(scale_dev,(uint32)album_decode_mem2);
+		scale_set_out_uaddr(scale_dev,(uint32)album_decode_mem2+scale_p1_w*p1_h);
+		scale_set_out_vaddr(scale_dev,(uint32)album_decode_mem2+scale_p1_w*p1_h+scale_p1_w*p1_h/4);
+
+		if(os_msgq_cnt(&album_yuv_msgq) < 8) {
+//			int ret = os_msgq_put(&album_yuv_msgq, (uint32_t)album_decode_mem2, 0);
+			int ret = os_msgq_put(&album_yuv_msgq, (uint32_t)album_decode_mem1, 0);
+			if(ret != 0) {
+				os_printf("album_yuv_msgq put failed, drop frame ret=%d\n", ret);
+			}
+		} else {
+			os_printf("album_yuv_msgq almost full, skipping frame to prevent overflow\r\n");
+		}
+	} else {
+		// scale_set_out_yaddr(scale_dev,(uint32)album_decode_mem3);
+		// scale_set_out_uaddr(scale_dev,(uint32)album_decode_mem3+scale_p1_w*p1_h);
+		// scale_set_out_vaddr(scale_dev,(uint32)album_decode_mem3+scale_p1_w*p1_h+scale_p1_w*p1_h/4);
+	}
+	 os_printf("scale2 done\r\n");
+}
+else
 {
-
-
 	if((decode_num%3) == 0){
 		scale_set_out_yaddr(scale_dev,(uint32)video_decode_mem);
 		scale_set_out_uaddr(scale_dev,(uint32)video_decode_mem+scale_p1_w*p1_h);
@@ -1166,7 +1241,89 @@ else
 	// os_printf("scale2 done\r\n");
 }
 	scale2_finish = 1;
+
+	// 原子性递增decode_num，避免竞争条件
+	// 在中断上下文中，简单的递增操作通常是原子的，但为了安全起见
+	// 我们确保这个操作在函数的最后执行，减少竞争窗口
 	decode_num++;
+}
+
+extern uint32_t rgb_limit(int32_t val);
+
+void yuv420p_to_rgb565(uint8_t *yuv, uint16_t *rgb565, int width, int height) {
+
+#if 1
+
+uint8_t *ybuf = yuv;
+uint8_t *ubuf = yuv+width*height;
+uint8_t *vbuf = yuv+width*height+width*height/4;
+int32_t temp = 0;
+int16_t y=0;
+int16_t u,v;
+uint8_t r,g,b;
+uint32_t uv_w = width/2;
+uint32_t uv_w_temp = 0;
+uint32_t uv_h_temp = 0;
+
+for(uint32_t i=0; i<height; i++) {
+	for(uint32_t j=0; j<width; j++) {
+		uv_w_temp = j/2;
+		uv_h_temp = i/2;
+		y = ybuf[i*width+j];
+		u = ubuf[uv_h_temp*uv_w+uv_w_temp]-128;
+		v = vbuf[uv_h_temp*uv_w+uv_w_temp]-128;
+		temp = ((y<<10) + 1441*v)>>10;
+		r = (uint8_t)rgb_limit(temp);
+		temp = ((y<<10) - 354*u -734*v)>>10;
+		g = (uint8_t)rgb_limit(temp);
+		temp = ((y<<10) + 1842*u)>>10;
+		b = (uint8_t)rgb_limit(temp);
+
+		rgb565[i*width+j] = ((r&0xF8)<<8)+((g&0xFC)<<3)+((b&0xF8)>>3);
+	}
+}
+#else
+    int y_size = width * height;
+    int uv_size = (width / 2) * (height / 2);
+    uint8_t *y = yuv;  // Y plane
+    uint8_t *u = yuv + y_size;  // U plane
+    uint8_t *v = u + uv_size;  // V plane
+
+ // 预计算用于整数计算的常量
+    const int R_COEFF = 104597;  // 1.402 * 256
+    const int G_COEFF_1 = 53280;  // -0.344136 * 256
+    const int G_COEFF_2 = 132251; // -0.714136 * 256
+    const int B_COEFF = 132300;   // 1.772 * 256
+    const int OFFSET = 128;
+
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            int y_index = i * width + j;
+            int uv_index = (i / 2) * (width / 2) + (j / 2);
+
+            uint8_t Y = y[y_index];
+            uint8_t U = u[uv_index];
+            uint8_t V = v[uv_index];
+
+            // cal RGB 
+			int R = Y + ((V - OFFSET) * R_COEFF >> 16);
+            int G = Y - ((U - OFFSET) * G_COEFF_1 >> 16) - ((V - OFFSET) * G_COEFF_2 >> 16);
+            int B = Y + ((U - OFFSET) * B_COEFF >> 16);
+
+            // Clip the values to be within the range [0, 255]
+            if (R < 0) R = 0;
+            if (R > 255) R = 255;
+            if (G < 0) G = 0;
+            if (G > 255) G = 255;
+            if (B < 0) B = 0;
+            if (B > 255) B = 255;
+
+            // Convert RGB to RGB565
+            uint16_t rgb = ((R >> 3) << 11) | ((G >> 2) << 5) | (B >> 3);
+            rgb565[y_index] = rgb;
+        }
+    }
+#endif
 }
 
 void scale3_doublebuf_done(uint32 irq_flag,uint32 irq_data,uint32 param1){
@@ -1704,11 +1861,17 @@ void jpg_decode_scale_config(uint32 dst){
 	scale_set_out_yaddr(scale_dev,(uint32)dst);
 	scale_set_out_uaddr(scale_dev,(uint32)dst+scale_p1_w*p1_h);
 	scale_set_out_vaddr(scale_dev,(uint32)dst+scale_p1_w*p1_h+scale_p1_w*p1_h/4);
-	scaler2buf = os_malloc(32+p1_w*12+(32*SRAMBUF_WLEN*4*3)/2);
-	if(scaler2buf == NULL){
-		return;
+	if( album_preload_inf.preload_enabled == 1){
+		album_scaler2buf = os_malloc(32+p1_w*12+(32*SRAMBUF_WLEN*4*3)/2);
+		if(album_scaler2buf == NULL ) return;
+		scale_set_line_buf_addr(scale_dev,(uint32)album_scaler2buf);
+	}
+	else {
+		scaler2buf = os_malloc(32+p1_w*12+(32*SRAMBUF_WLEN*4*3)/2);
+		if(scaler2buf == NULL ) return;
+		scale_set_line_buf_addr(scale_dev,(uint32)scaler2buf);
 	}	
-	scale_set_line_buf_addr(scale_dev,(uint32)scaler2buf);
+//	scale_set_line_buf_addr(scale_dev,(uint32)scaler2buf);
 	scale_set_srambuf_wlen(scale_dev,SRAMBUF_WLEN);
 	scale_set_start_addr(scale_dev,0,0);
 	scale_request_irq(scale_dev,FRAME_END,(scale_irq_hdl )&scale2_done,(uint32)scale_dev);	
@@ -1726,6 +1889,11 @@ void jpg_dec_scale_del(){
 	if(scaler2buf)
 	{
 		os_free(scaler2buf);
+		scaler2buf = NULL;
+	}
+	if(album_scaler2buf)
+	{
+		os_free(album_scaler2buf);
 		scaler2buf = NULL;
 	}
 }
@@ -1787,7 +1955,6 @@ void jpg_decode_to_lcd(uint32 photo,uint32 jpg_w,uint32 jpg_h,uint32 video_w,uin
 	scale_set_step(scale_dev,jpg_w,jpg_h,video_w,video_h);	
 	#endif
 	
-
 	scale_open(scale_dev);	
 	jpg_decode_photo(jpg_dev,photo);
 }
@@ -2312,7 +2479,8 @@ void lcd_module_run(uint16_t *w,uint16_t *h,uint8_t *rotate){
 			
 	}
 	lcdc_set_start_run(lcd_dev);
-   
+    
+    albumnails_thread_init();
 }
 
 

@@ -4272,7 +4272,7 @@ void lv_page_select(uint8_t page)
 		
 		
 		jpeg_file_get(name,1,"AVI");
-		sprintf((char *)name_rec_photo,"%s%s","0:DCIM/",name);
+		sprintf((char *)name_rec_photo,"%s%s","0:/DCIM/",name);
 		rec_playback_thread_init(name_rec_photo);
 		lcd_info.lcd_p0p1_state = 2;
 		lcdc_set_video_en(lcd_dev,1);

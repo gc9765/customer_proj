@@ -1,5 +1,6 @@
 #ifndef _FLY_DEMO_
 #define _FLY_DEMO_
+#include "lib/lcd/lcd.h"
 
 #define BABY_UI_MAGICSOUND
 #define DISPLAY_DEBUGINFO_ENABLE
@@ -60,7 +61,7 @@ typedef enum _SET_MENU_
 typedef enum _PAGE_NUM_
 {
     PAGE_HOME=0,
-    PAGE_INTERCOM,
+    PAGE_WECHAT,
     PAGE_CAMERA,
     PAGE_ALBUM,
 	PAGE_SET,
@@ -71,6 +72,7 @@ typedef enum _PAGE_NUM_
     PAGE_PWERON,
     PAGE_USB,
     PAGE_POWEROFF,
+	PAGE_INTERCOM,
     PAGE_MAX
 }PAGENUM;
 
@@ -228,6 +230,12 @@ extern lv_obj_t * gamePage_btn;
 extern lv_obj_t * musicPage_btn;
 extern lv_obj_t * ui_homeBatImg;
 
+// 主界面图标图片控件（用于圆角和图片切换）
+extern lv_obj_t * intercomPage_icon;
+extern lv_obj_t * cameraPage_icon;
+extern lv_obj_t * albumPage_icon;
+extern lv_obj_t * settPage_icon;
+
 extern USR_PAGE_BTN user_pagebtn_list[6];
 
 
@@ -327,6 +335,7 @@ extern lv_obj_t *ui_albumTopBar;
 extern lv_obj_t *ui_aSdIconImg;
 extern lv_obj_t *ui_aSdStaLabel;
 extern lv_obj_t *ui_albumPrinterFlag;
+extern lv_obj_t * album_9_Panel;
 //lv_obj_t *ui_aBatIconLabel;
 extern lv_obj_t *ui_albumBatImg;
 extern lv_obj_t *ui_albumIconImg;
@@ -336,6 +345,12 @@ extern lv_obj_t *ui_fileFormatLabel;
 extern lv_obj_t *ui_fileNumsLabel;
 extern lv_obj_t *ui_albumPrevBtn;
 extern lv_obj_t *ui_albumNextBtn;
+
+
+// WECHAT: ui_WeChatPage
+extern lv_obj_t *ui_intercomBatImg;
+extern lv_obj_t *ui_wechatBattImg;
+extern lv_obj_t *ui_wechatBattLabel;
 
 // SCREEN: ui_musicPage
 #if 0

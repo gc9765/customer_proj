@@ -86,16 +86,40 @@ uint8_t arrary_compare(uint8 *src,uint8 *dst,uint8 len){
 }
  
 
+// 提取JPEG文件名中的数字部分
+static uint32_t extract_jpeg_number(const char *filename) {
+    // 跳过前缀，找到数字部分
+    const char *p = filename;
+
+    // 跳过 "JPEG" 前缀
+    while (*p && (*p < '0' || *p > '9')) {
+        p++;
+    }
+
+    // 解析数字部分
+    uint32_t num = 0;
+    while (*p >= '0' && *p <= '9') {
+        num = num * 10 + (*p - '0');
+        p++;
+    }
+
+    return num;
+}
+
 // compare file_name num
 int compare_file_number(const char *name1, const char *name2) {
-    int num1, num2;
-	 
-	num1 = a2i(name1);
-	num2 = a2i(name2);
+    uint32_t num1, num2;
+
+	num1 = extract_jpeg_number(name1);
+	num2 = extract_jpeg_number(name2);
+
+    // 调试：打印比较结果
+//    os_printf("Comparing files: %s -> %d, %s -> %d\r\n", name1, num1, name2, num2);
 
 	if (num1 != num2) {
         return (num1 < num2) ? -1 : 1;
     }
+    return 0;
 }
 
 
@@ -179,15 +203,23 @@ void album_next_file(void) {
     } else {
         album_cur_selected = album_list_head;  // 回到头部
     }
-    printf("current selected file=%s\n", album_cur_selected->name);
+//    printf("current selected file=%s\n", album_cur_selected->name);
 }
 
 void album_prev_file(void) {
-    if (album_cur_selected && album_cur_selected->prev) {
-        album_cur_selected = album_cur_selected->prev;
-    } else {
-        album_cur_selected = album_list_tail;  // 回到底部
+    // 确保链表尾存在
+    if (!album_list_tail) {
+        printf("album_list_tail is NULL\n");
+        return;
     }
+
+    // 如果当前选择为空或者没有上一个文件，从尾部开始
+    if (!album_cur_selected || !album_cur_selected->prev) {
+        album_cur_selected = album_list_tail;
+    } else {
+        album_cur_selected = album_cur_selected->prev;
+    }
+
     printf("current selected file=%s\n", album_cur_selected->name);
 }
 
@@ -197,7 +229,7 @@ void delete_selected_file(void) {
     if (!album_cur_selected)
 	 return;
 
-	sprintf(fullpath,"%s%s","0:DCIM/",album_cur_selected->name);
+	sprintf(fullpath,"%s%s","0:/DCIM/",album_cur_selected->name);
 
 	//if (f_unlink(album_cur_selected->name) != FR_OK) 
 	if(f_unlink(fullpath) != FR_OK)
@@ -286,6 +318,13 @@ int scan_album_files() {
 		}
     }
     f_closedir(&album_dir);
+
+    // 初始化当前选择指针到链表头部
+    if (album_list_head) {
+        album_cur_selected = album_list_head;
+        printf("album_cur_selected initialized to: %s\n", album_cur_selected->name);
+    }
+
     //custom_free_psram(filelist);
 	return num_files;
 }
@@ -396,7 +435,8 @@ void jpeg_photo_explain(uint8* photo_name, uint32 scale_w, uint32 scale_h){
 
 	while(!photo_sd_cache)
 	{
-		photo_sd_cache = (uint8_t*)custom_malloc(photo_sd_cache_size);
+//		photo_sd_cache = (uint8_t*)custom_malloc(photo_sd_cache_size);
+		photo_sd_cache = (uint8_t*)custom_malloc_psram(photo_sd_cache_size);
 		if(!photo_sd_cache)
 		{
 			photo_sd_cache_size >>= 1;
@@ -432,6 +472,7 @@ void jpeg_photo_explain(uint8* photo_name, uint32 scale_w, uint32 scale_h){
 	jpg_analyze(data_buf,(uint8_t *)photo_size);
 	_os_printf("width:%d  high:%d\r\n",photo_size[0],photo_size[1]);
 	jpg_decode_to_lcd((uint32)data_buf,photo_size[1],photo_size[0],scale_w,scale_h);
+//	jpg_decode_to_lcd((uint32)data_buf,photo_size[0],photo_size[1],scale_w,scale_h);
 	while(!jpg_decode_is_finish() && count < 1000)
 	{
 		os_sleep_ms(1);
@@ -454,7 +495,8 @@ jpeg_photo_explain_end:
 
 	if(photo_sd_cache)
 	{
-		custom_free(photo_sd_cache);
+//		custom_free(photo_sd_cache);
+		custom_free_psram(photo_sd_cache);
 	}
 
 }

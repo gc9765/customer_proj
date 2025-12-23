@@ -35,9 +35,14 @@
 #define PHOTO1_H        240
 #endif
 
+// 相册、相机拍摄图片缩略尺寸
+#define CAMERA_ALBUM_SCALE_W   80
+#define CAMERA_ALBUM_SCALE_H   64
+
+#define SCALE_ALBUM_CONFIG_W   ((CAMERA_ALBUM_SCALE_W+3)/4)*4
 
 
-#define SCALE_CONFIG_W  ((SCALE_WIDTH+3)/4)*4
+#define SCALE_CONFIG_W  ((SCALE_WIDTH+3)/4)*4     //宽度向上对齐到4的整数倍
 #define SCALE_PHOTO1_CONFIG_W  ((PHOTO1_W+3)/4)*4        
 
 #if LCD_SET_ROTATE_180
@@ -188,9 +193,6 @@ void lcd_user_frame(uint32 frame_addr);
 void jpg_decode_to_lcd(uint32 photo,uint32 jpg_w,uint32 jpg_h,uint32 video_w,uint32 video_h);
 int32 jpg_decode_is_finish();
 
-void lcd_backlight_init(void);
-void lcd_set_brightness(uint8_t level);
 
-void lcd_backlight_test_simple();
 
 #endif

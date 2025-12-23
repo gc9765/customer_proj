@@ -22,6 +22,8 @@
 #include "sonic_process.h"
 #include "magic_sound.h"
 
+#include "key2_wav_record.h"
+
 #define ADC_DIGITMUTE_ENABLE
 int adc_digitmute_flag=1;
 
@@ -37,8 +39,8 @@ int adc_digitmute_flag=1;
 #define AEC_PROCESS   0
 #define AGC_PROCESS   0
 #define VAD_PROCESS   0
-#define NSX_PROCESS   1  //噪声抑制
-#define MAGIC_SOUND   1  //魔音
+#define NSX_PROCESS   1
+#define MAGIC_SOUND   1
 int aec_flag = -1;
 int agc_flag = -1;
 int vad_flag = -1;
@@ -48,7 +50,7 @@ int nsx_flag = -1;
 magicSound *magic_sound = NULL;
 #endif
 
-#define AUDIONUM	(4)
+#define AUDIONUM	(12)
 #define AUDIOLEN	(320)
 #define FILTER_SAMPLE_LEN	0
 
@@ -69,7 +71,6 @@ typedef void *(*set_buf)(void *priv_el,void *el_point);
 typedef void (*get_buf)(void *priv_el,void *el_point);
 
 typedef int32 (*audio_ad_read)(struct audio_ad_config *audio, void* buf, uint32 len);
-
 
 
 void audio_adc_mute(void)
@@ -224,7 +225,7 @@ static void audio_deal_task(void *arg)
 
 	stream *s = (stream *)arg;
 	struct audio_adc_s *self_priv = (struct audio_adc_s*)s->priv;
-#if MEDIAN_FILTER == 1
+#if MEDIAN_FILTER == 1//开启中值滤波，保留前一帧末尾的几个样点，用于跨帧平滑
 	os_memset(median_filter_prev_buf, 0, MEDIAN_FILTER_SAMPLE_LEN*2);
 #endif
 	while(1)
@@ -234,6 +235,8 @@ static void audio_deal_task(void *arg)
 		{
             p_buf = get_stream_real_data(data);
 			sample_len = get_stream_real_data_len(data)/2;
+			
+			
 		#if MEDIAN_FILTER == 1
 			os_memcpy(p_buf, median_filter_prev_buf, MEDIAN_FILTER_SAMPLE_LEN*2);
 			for(uint32_t i=MEDIAN_FILTER_SAMPLE_LEN; i<(sample_len+MEDIAN_FILTER_SAMPLE_LEN); i++) {
@@ -293,7 +296,7 @@ static void audio_deal_task(void *arg)
 				for(uint32_t i=0;i<sample_len;i++) {
 				
 		#ifdef ADC_DIGITMUTE_ENABLE
-
+					
 					if((adc_digitmute_flag)&&(rec_open==0))
 						temp = 0;
 					else
@@ -309,8 +312,7 @@ static void audio_deal_task(void *arg)
 
 					p_buf++;
 				}
-
-
+							
 			data->type = SET_DATA_TYPE(SOUND,SOUND_MIC);
             send_data_to_stream(data);
 		}
@@ -369,6 +371,10 @@ static int opcode_func(stream *s,void *priv,int opcode)
             }
 			streamSrc_bind_streamDest(s, R_INTERCOM_AUDIO);
 			streamSrc_bind_streamDest(s, R_SPEECH_RECOGNITION);
+			streamSrc_bind_streamDest(s, R_RECORD_AUDIO);
+			os_printf("[adc] bind R_RECORD_AUDIO done\r\n");
+           	streamSrc_bind_streamDest(s, R_SPEAKER);
+
 		}
 		break;
 

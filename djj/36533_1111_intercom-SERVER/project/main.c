@@ -83,7 +83,7 @@
 #include "play_pcmtone.h"
 
 extern uint8_t get_psram_status();
-
+extern volatile uint8_t g_pair_link_ok; 
 struct system_status sys_status;
 extern uint32 srampool_start;
 extern uint32 srampool_end;
@@ -136,9 +136,13 @@ int32 sys_wifi_event(uint8 ifidx, uint16 evt, uint32 param1, uint32 param2)
             break;
         case IEEE80211_EVENT_CONNECTED:
             os_printf("inteface%d: sta "MACSTR" connected\r\n", ifidx, MAC2STR((uint8 *)param1));
+			sys_status.wifi_connected = 1;
+			g_pair_link_ok = 1;
             break;
         case IEEE80211_EVENT_DISCONNECTED:
             os_printf("inteface%d: sta "MACSTR" disconnected\r\n", ifidx, MAC2STR((uint8 *)param1));
+			sys_status.wifi_connected = 0;
+			g_pair_link_ok = 0;
             break;
         case IEEE80211_EVENT_RSSI:
             //os_printf("inteface%d rssi: %d\r\n", ifidx, param1);
@@ -166,7 +170,7 @@ int32 sys_wifi_event(uint8 ifidx, uint16 evt, uint32 param1, uint32 param2)
                 os_printf("  STA  PAIR SUCCESS !!! \r\n");
                 //set_pair_mode(0);
                 sys_event_new(SYS_EVENT(SYS_EVENT_WIFI, SYSEVT_WIFI_PAIR_DONE), 1);
-                  userPairSuccess();
+				userPairSuccess();
             }
 			#if 1
 			else if(WIFI_MODE_AP == ifidx)
@@ -1054,17 +1058,14 @@ uint8 vcam_en()
 
 void hardware_init(uint8 vcam)
 {
-	gpio_set_val(PC_7,0);
-	gpio_iomap_output(PC_7,GPIO_IOMAP_OUTPUT);
+//	gpio_set_val(PC_7,0);
+//	gpio_iomap_output(PC_7,GPIO_IOMAP_OUTPUT);
     if(vcam == FALSE)
 	{
 		os_printf("vcam err\n");
         return;
 	}
 
-
-
-    
     //需要workqueue支持
     stream_work_queue_start();
 	#if KEY_MODULE_EN == 1
@@ -1352,18 +1353,19 @@ int main(void)
 
     
         app_network_init();
-        intercom_init();
+//		intercom_init();
+		wechat_ptt_key_init();
         //udpKeepAlive_init();
-
         /*开机提示音*/
 //    	 play_pcmtone(&starttone);
-		OS_TASK_INIT("startup_tone", &startup_tone_task_hdl, startup_tone_task, NULL, OS_TASK_PRIORITY_NORMAL-1, 1024);
+//		OS_TASK_INIT("startup_tone", &startup_tone_task_hdl, startup_tone_task, NULL, OS_TASK_PRIORITY_NORMAL-1, 1024);
         /*开机提示音*/
-		
         
         mcu_watchdog_timeout(5);
         OS_WORK_INIT(&main_wk, main_loop, 0);
         os_run_work_delay(&main_wk, 1000);
+		
+//		play_pcmtone(&starttone);
     }
     pmu_clr_deadcode_pending();
 #ifdef LLM_DEMO
@@ -1372,7 +1374,6 @@ extern void llm_demo(void);
 #endif
     return 0;
 }
-
 
 //测试速率使用,wifi模式:RATE_CONTROL_SELECT请选择RATE_CONTROL_IPC
 #else

@@ -86,6 +86,19 @@ void invisible_setting_submenu0(void);
 void back_settMenu(void);
 
 
+extern uint8_t g_intercom_rt_enable;
+extern uint8_t g_intercom_audio_enable;
+
+extern void intercom_encode_switch(uint8 enable);
+extern void intercom_init(void);
+extern void intercom_suspend(void);
+extern void intercom_resume(void);
+
+extern volatile uint8_t intercom_audio_active;
+extern volatile uint8_t intercom_page_active;
+
+
+
 /*key group 用于键盘/按键焦点管理*/
 lv_group_t * group_cur =NULL;
 lv_group_t * home_group;
@@ -119,6 +132,12 @@ lv_obj_t * musicPage_btn;
 lv_obj_t * label_rec;
 USR_PAGE_BTN user_pagebtn_list[6];
 lv_obj_t * ui_homeBatImg; 
+
+// 主界面图标图片控件（用于圆角和图片切换）
+lv_obj_t * intercomPage_icon = NULL;
+lv_obj_t * cameraPage_icon = NULL;
+lv_obj_t * albumPage_icon = NULL;
+lv_obj_t * settPage_icon = NULL;
 
 /*videoPage objects*/
 lv_obj_t *ui_videoPage;
@@ -237,6 +256,8 @@ lv_obj_t * ui_speedinfo_tx_obj;
 lv_obj_t * ui_speedinfo_id_obj;
 lv_obj_t * ui_speedinfo_num_obj;
 
+lv_obj_t * album_9_Panel;
+
 extern uint16_t rx_speed,tx_speed;
 extern uint8_t dispnum;
 
@@ -297,6 +318,7 @@ void start_record_thread(uint8_t video_fps,uint8_t audio_frq);
 uint8_t send_stop_record_cmd();
 
 uint8_t  lcd_pair_success;  // 
+volatile uint8_t g_pair_link_ok = 0; 
 
 const lv_img_dsc_t *ui_imgset_iconBat[5] = {&iconBat0,&iconBat1,&iconBat2,&iconBat3,&iconBat4};
 
@@ -314,7 +336,21 @@ uint8_t vga_room[2][640*480+640*480/2]__attribute__ ((aligned(4),section(".psram
 // jpg解码缓冲区50k，放在外部 PSRAM
 uint8_t jpg_psram_mem[50*1024] __attribute__ ((aligned(4),section(".psram.src")));
 
+uint8_t g_camera_from_page;
+uint8_t g_img_from_page;
 
+/* 记录是谁打开了相机 / 相册 */
+void start_camera_from(uint8_t from_page)
+{
+    g_camera_from_page = from_page; // 记录是谁打开的相机
+    lv_page_select(PAGE_CAMERA);    // 当前页面跳转到相机
+}
+
+void start_img_from(uint8_t from_page)
+{
+    g_img_from_page = from_page;    // 记录是谁打开的相册
+    lv_page_select(PAGE_ALBUM);
+}
 
 //清零 h/m/s，录制时间用
 void lv_time_reset(struct lv_time *time_now){
@@ -470,6 +506,10 @@ void event_handler(lv_event_t * e)
 		else if(camera_gvar.page_cur == PAGE_ALBUM){
 			ui_event_albumPage(e);
 		}
+		else if(camera_gvar.page_cur == PAGE_WECHAT){
+            ui_event_wechatPage(e);  
+        }
+
 #if 0
 		else if(camera_gvar.page_cur == PAGE_VIDEO){
 			ui_event_recPage(e);
@@ -509,6 +549,8 @@ void batteryStatusProcess(void)
 	//	lv_img_set_src(ui_vBatImg, ui_imgset_iconBat[bt_status]);
 	 else if(camera_gvar.page_cur == PAGE_SET)//sett
 	 	lv_img_set_src(ui_settBatImg, ui_imgset_iconBat[bt_status]);
+	else if (camera_gvar.page_cur == PAGE_WECHAT) 
+		lv_img_set_src(ui_wechatBattImg, ui_imgset_iconBat[bt_status]);
 	// else if(camera_gvar.page_cur == PAGE_GAME)//game
 	// 	lv_img_set_src(ui_gameBatImg, ui_imgset_iconBat[bt_status]);
 	// else if(camera_gvar.page_cur == PAGE_MUSIC)//music
@@ -629,22 +671,35 @@ void homePageIconFlash(void) //主界面 图标闪烁
 				//btn = ui_pagebtn_list[camera_gvar.pagebtn_index];
 				flash ^=1;
 				if(flash)
-				{ 
-					for(i=0;i<4;i++)   //主界面 按键个数 ；
-					{
-						if(camera_gvar.pagebtn_index ==i)
-							lv_obj_set_style_bg_img_src(user_pagebtn_list[i].pagebtn, user_pagebtn_list[i].bimg, LV_PART_MAIN | LV_STATE_DEFAULT );
-						else
-							lv_obj_set_style_bg_img_src(user_pagebtn_list[i].pagebtn, user_pagebtn_list[i].nimg, LV_PART_MAIN | LV_STATE_DEFAULT );
-					}
+				{
+					// 主界面图标切换：选中状态显示 bimg，否则显示 nimg
+					if(intercomPage_icon && camera_gvar.pagebtn_index == 0)
+						lv_img_set_src(intercomPage_icon, ui_imgset_iconHomeintercom[1]);  // 选中状态
+					else if(intercomPage_icon)
+						lv_img_set_src(intercomPage_icon, ui_imgset_iconHomeintercom[0]);  // 普通状态
 
+					if(cameraPage_icon && camera_gvar.pagebtn_index == 1)
+						lv_img_set_src(cameraPage_icon, ui_imgset_iconHomeCamera[1]);
+					else if(cameraPage_icon)
+						lv_img_set_src(cameraPage_icon, ui_imgset_iconHomeCamera[0]);
+
+					if(albumPage_icon && camera_gvar.pagebtn_index == 2)
+						lv_img_set_src(albumPage_icon, ui_imgset_iconHomePlayer[1]);
+					else if(albumPage_icon)
+						lv_img_set_src(albumPage_icon, ui_imgset_iconHomePlayer[0]);
+
+					if(settPage_icon && camera_gvar.pagebtn_index == 3)
+						lv_img_set_src(settPage_icon, ui_imgset_iconHomeMenu[1]);
+					else if(settPage_icon)
+						lv_img_set_src(settPage_icon, ui_imgset_iconHomeMenu[0]);
 				}
 				else
 				{
-					for(i=0;i<4;i++)  //主界面 按键个数 ；
-					{
-						lv_obj_set_style_bg_img_src(user_pagebtn_list[i].pagebtn, user_pagebtn_list[i].nimg, LV_PART_MAIN | LV_STATE_DEFAULT );
-					}
+					// 所有图标恢复普通状态
+					if(intercomPage_icon) lv_img_set_src(intercomPage_icon, ui_imgset_iconHomeintercom[0]);
+					if(cameraPage_icon) lv_img_set_src(cameraPage_icon, ui_imgset_iconHomeCamera[0]);
+					if(albumPage_icon) lv_img_set_src(albumPage_icon, ui_imgset_iconHomePlayer[0]);
+					if(settPage_icon) lv_img_set_src(settPage_icon, ui_imgset_iconHomeMenu[0]);
 				}
 			}
 		}
@@ -922,6 +977,7 @@ void intercom_wifi(void)
 				ipf_update_flag = 1;
 				rahmen_open = 0;
 				lcd_pair_success = 0;
+				printf("!!! TRAP: lcd_pair_success set to 0 in %s at line %d !!!\n", __func__, __LINE__);
 				lv_page_select(PAGE_INTERCOM);
 
 		#else	
@@ -1088,18 +1144,23 @@ void signalDisplayProcess(void)
 	}
 }
 
+static uint8_t s_pair_ok_show_cnt = 0;   // 成功弹窗显示秒数
+static uint8_t s_timeout_show_cnt = 0;   // 你已有：超时弹窗显示秒数
 uint8 conncet_flag;
 // 配对开始函数
 void userPairStart(void)
 {
-
 	printf(" ## userPairStart \n");
 	set_pair_mode(1);
 	camera_gvar.pair_out_times =60;
 	camera_gvar.pair_success=0;
+	printf("!!! TRAP: lcd_pair_success set to 0 in %s at line %d !!!\n", __func__, __LINE__);
 	lcd_pair_success = 0;
 	conncet_flag = 0;
-	if(camera_gvar.page_cur==PAGE_INTERCOM) //camera page
+	
+	s_timeout_show_cnt = 0;
+	s_pair_ok_show_cnt = 0;
+	if(camera_gvar.page_cur==PAGE_HOME) //camera page
 	{	
 		// visiable shot icon
 		// sprintf(pair_str,"配对 时间:#ff0088 %02d# ",camera_gvar.pair_out_times);
@@ -1118,116 +1179,166 @@ void userPairstop(void)
 // 配对成功函数
 void userPairSuccess(void)
 {
-	printf(" ## userPairSuccess \n");
-	camera_gvar.pair_success=1;
+    // 如果已经是成功状态，防止重复触发重置时间
+    if (camera_gvar.pair_success == 1) return;
+
+    printf(" ## userPairSuccess \r\n");
+    
+    camera_gvar.pair_success = 1;      // 标记状态为成功
+    camera_gvar.pair_out_times = 0;    // 清除配对倒计时（防止还在后台走）
+    
+    s_pair_ok_show_cnt = 2;            // ⭐ 关键：给成功展示计数器赋值 2 秒
+}
+
+static uint8_t s_home_autopair_started = 0;
+
+void home_start_pair_once(void)
+{
+    if (s_home_autopair_started) return;
+	// 检查WiFi是否已经连接
+	if (get_wifi_connect_flag()) {
+		s_home_autopair_started = 1;  // 标记已启动，但不重启WiFi
+		return;
+	}
+    s_home_autopair_started = 1;
+	
+	if (sys_cfgs.wifi_mode == WIFI_MODE_STA) {
+		ieee80211_iface_start(WIFI_MODE_STA);
+		os_sleep_ms(50);
+	}
+
+    userPairStart();   // 这里会设置 pair_out_times=60 并显示面板
 }
 
 
+// 这个函数建议放在 timer_event 中每秒调用一次
+void pair_logic_tick(void)
+{
+    /* 成功弹窗倒计时 */
+    if (camera_gvar.pair_success)
+    {
+        if (s_pair_ok_show_cnt > 0) {
+            s_pair_ok_show_cnt--;
+        }
 
+        if (s_pair_ok_show_cnt == 0) {
+            camera_gvar.pair_success = 0;
+            if (get_net_pair_status()) {
+                set_pair_mode(0);              // 需要的话顺便关底层配对
+            }
+        }
+        return;
+    }
 
+    /* 正常配对倒计时 (60 -> 0) */
+    if (camera_gvar.pair_out_times > 0)
+    {
+        camera_gvar.pair_out_times--;
 
-// void pairDisplayProcess(void)
-// {
-// 	if(camera_gvar.page_cur==PAGE_INTERCOM) //intercom page
-// 	{
-// 		// if(camera_gvar.pair_out_times)
-// 		// {
-// 		// 	camera_gvar.pair_out_times --;
-// 		// 	printf(" ## pair_out_times=%d \n",camera_gvar.pair_out_times);
+        if (camera_gvar.pair_out_times == 0)
+        {
+            printf(" ## Pair Timeout! Start showing timeout msg.\n");
+            if (get_net_pair_status()) {
+                set_pair_mode(0);
+            }
+            s_timeout_show_cnt = 3; // 超时文字显示 3 秒
+        }
+    }
 
-	
-// 			if(camera_gvar.pair_success)
-// 			{
-// 				//lv_label_set_text(ui_pairTeimlabel,"配对 成功 ");	
-					
-// 				if(get_net_pair_status())
-// 				{
-// 					//camera_gvar.pair_out_times=12;
-// 					set_pair_mode(0);
-// 				}
+    /* 超时提示倒计时 */
+    if (s_timeout_show_cnt > 0) {
+        s_timeout_show_cnt--;
+    }
+}
 
-// 				if(dispnum>0)
-// 				{
-// 					//lv_obj_add_flag( ui_pairPanel, LV_OBJ_FLAG_HIDDEN );   /// Flags
-// 					//lv_obj_set_style_bg_opa(ui_intercomPage, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
-// 					//lv_obj_set_style_bg_color(ui_intercomPage, lv_color_hex(0x000000), 0);
-// 					camera_gvar.pair_out_times =0;
-// 					lcd_pair_success = 1;
-// 				}
-// 			}
-// 			else
-// 			{
-// 				if(get_net_pair_status())
-// 					set_pair_mode(0);
-// 					//lv_obj_add_flag( ui_pairPanel, LV_OBJ_FLAG_HIDDEN );   /// Flags
-// 			}
-
-// 		// }
-// 	}
-// }
-
-
-
-// 配对显示处理函数
+ 
 void pairDisplayProcess(void)
 {
-	if(camera_gvar.page_cur==PAGE_INTERCOM) //intercom page
-	{
-		if(camera_gvar.pair_out_times)
-		{
-			if(camera_gvar.pair_success == 0)
-				camera_gvar.pair_out_times --;             
-			printf(" ## pair_out_times=%d \n",camera_gvar.pair_out_times);
+    if (camera_gvar.page_cur != PAGE_HOME) {
+        pair_popup_hide();
+        return;
+    }
 
-			printf(" ## !! camera_gvar.pair_success =%d,sys_status.pair_success=%d \r\n",camera_gvar.pair_success,sys_status.pair_success);
-			if(camera_gvar.pair_success)
-			{
-				lv_label_set_text(ui_pairTeimlabel,"配对 成功 ");	
-					
-				if(get_net_pair_status())
-				{
-					camera_gvar.pair_out_times=12;
-					set_pair_mode(0);
-				}
+    if (camera_gvar.pair_success || camera_gvar.pair_out_times > 0 || s_timeout_show_cnt > 0) {
+        pair_popup_create();
+    } else {
+        pair_popup_hide();
+        return;
+    }
 
-				printf(" ## !! dispnum =%d \n",dispnum);
-				if(dispnum>0)
-				{
-					lv_obj_add_flag( ui_pairPanel, LV_OBJ_FLAG_HIDDEN );   /// Flags
-					//lv_obj_set_style_bg_opa(ui_intercomPage, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
-					lv_obj_set_style_bg_color(ui_intercomPage, lv_color_hex(0x000000), 0);
-					camera_gvar.pair_out_times =0;
-					lcd_pair_success = 1;
-				}
-			}
-			else
-			{
-				if(camera_gvar.pair_out_times== 0)
-				{
-					if(get_net_pair_status())
-						set_pair_mode(0);
-
-					lv_label_set_text(ui_pairTeimlabel,"配对 超时");	
-
-					//lv_obj_add_flag( ui_pairPanel, LV_OBJ_FLAG_HIDDEN );   /// Flags
-				}	
-				else
-				{
-					//sprintf(pair_str,"配对 时间:#ff0088 %02d# ",camera_gvar.pair_out_times);
-					sprintf(pair_str,"配对 时间:%02d",camera_gvar.pair_out_times);
-					lv_label_set_text(ui_pairTeimlabel,pair_str);	
-				}
-			}
-			// if(!get_net_pair_status())
-			// {
-			// 	camera_gvar.pair_out_times=0;
-			// 	lv_obj_add_flag( ui_pairPanel, LV_OBJ_FLAG_HIDDEN );   /// Flags
-			// }	
-		}
-	}
+    if (camera_gvar.pair_success) {
+        pair_popup_show("配对 成功 ");
+    } else if (camera_gvar.pair_out_times > 0) {
+        sprintf(pair_str, "配对 时间:%02d", camera_gvar.pair_out_times);
+        pair_popup_show(pair_str);
+    } else if (s_timeout_show_cnt > 0) {
+        pair_popup_show("配对 超时");
+    }
 }
 
-
+//void pairDisplayProcess(void)
+//{
+//    if (camera_gvar.page_cur != PAGE_HOME) return;
+//
+//    // 确保弹窗对象已创建（只创建一次）
+//    pair_popup_create();
+//
+//    if (camera_gvar.pair_out_times)
+//    {
+//        if (camera_gvar.pair_success == 0)
+//            camera_gvar.pair_out_times--;
+//
+//        printf(" ## pair_out_times=%d \n",camera_gvar.pair_out_times);
+//        printf(" ## !! camera_gvar.pair_success =%d,sys_status.pair_success=%d \r\n",
+//               camera_gvar.pair_success, sys_status.pair_success);
+//
+//        if (camera_gvar.pair_success)
+//        {
+//            // 成功：显示“配对成功”
+//            pair_popup_show("配对 成功 ");
+//
+//            if (get_net_pair_status())
+//            {
+//                camera_gvar.pair_out_times = 12;
+//                set_pair_mode(0);
+//            }
+//
+//            printf(" ## !! dispnum =%d \n",dispnum);
+//            if (dispnum > 0)
+//            {
+//                // 原来是隐藏 ui_pairPanel，现在要隐藏整个弹窗(mask)
+//                pair_popup_hide();
+//
+//                // 你原来的逻辑保留
+////                lv_obj_set_style_bg_color(ui_intercomPage, lv_color_hex(0x000000), 0);
+//                camera_gvar.pair_out_times = 0;
+//                lcd_pair_success = 1;
+//            }
+//        }
+//        else
+//        {
+//            if (camera_gvar.pair_out_times == 0)
+//            {
+//                if (get_net_pair_status())
+//                    set_pair_mode(0);
+//
+//                // 超时：显示“配对超时”（你想要超时后自动消失，也可以这里加计数）
+//                pair_popup_show("配对 超时");
+//            }
+//            else
+//            {
+//                sprintf(pair_str, "配对 时间:%02d", camera_gvar.pair_out_times);
+//                pair_popup_show(pair_str);
+//            }
+//        }
+//    }
+//    else
+//    {
+//        // pair_out_times==0：默认隐藏（可选）
+//        // 如果你想“超时文字保留在屏幕上”，就注释掉这一行
+//        pair_popup_hide();
+//    }
+//}
 
 
 
@@ -1286,12 +1397,12 @@ void timer_event(){
 	// nextprev_PressAnimationProcess();
 	 homePageIconFlash();  // //主界面 图标闪烁
 
-	if(photo_flag)  // 配对后 检测对方是否退出
-	{
-		os_printf("photo_flag \r\n");
-		photo_flag = 0;
-		intercom_wifi(); //intercom状态
-	}
+//	if(photo_flag)  // 配对后 检测对方是否退出
+//	{
+//		os_printf("photo_flag \r\n");
+//		photo_flag = 0;
+//		intercom_wifi(); //intercom状态
+//	}
 
 	delay_open_lcd_process(); //延时开屏处理函数
 
@@ -1318,6 +1429,7 @@ void timer_event(){
 		volDisplayProcess();     //音量界面
 		signalDisplayProcess();  //信号刷新
 		display_magicsoud_type(); //魔音刷新
+		home_wifi_dot_update();
 
 		//	wifi_connect_process();
 		// noticeDisplayProcess();
@@ -1330,9 +1442,11 @@ void timer_event(){
 			if(camera_gvar.welcome_times==0)
 			lv_page_select(camera_gvar.poweron_nextpage);
 		}
+		lv_ablum_9_flush();
 	}
 
 	if((timer_count%10) == 0){ // one second 
+		pair_logic_tick();
 		pairDisplayProcess();  //配对检测
 	}	
 
@@ -1344,6 +1458,39 @@ void timer_event(){
 	}
 
 
+//	// 监控对讲语音状态
+//	if(camera_gvar.page_cur == PAGE_INTERCOM) {
+//		static uint8_t video_health_check = 0;
+//		static uint8_t audio_health_check = 0;
+//
+//		// 每10秒检查一次视频状态
+//		if((timer_count % 100) == 0) {
+//			video_health_check++;
+//
+//			// 检查视频是否正常
+//			if(bbm_displaydecode_run == 0) {
+//				printf("Intercom: Video abnormal, restarting...\r\n");
+//				bbm_displaydecode_run = 1;
+//				video_health_check = 0;
+//			}
+//		}
+//
+//		// 每10秒检查一次音频状态
+//		if((timer_count % 100) == 0) {
+//			audio_health_check++;
+//
+//			// 检查音频是否正常
+//			if(intercom_audio_active &&
+//				(g_intercom_rt_enable == 0 || g_intercom_audio_enable == 0)) {
+//				printf("Intercom: Audio abnormal, restarting...\r\n");
+//				g_intercom_rt_enable = 1;
+//				g_intercom_audio_enable = 1;
+//				intercom_encode_switch(1);
+//				intercom_resume();
+//				audio_health_check = 0;
+//			}
+//		}
+//	}
 	timer_count++;
 }
 
@@ -1668,7 +1815,7 @@ void poweron_welcome(void)
 	camera_gvar.pagebtn_index =0;
 	camera_gvar.gametab_index =2;
 	camera_gvar.poweron_nextpage= PAGE_HOME;//PAGE_HOME;//PAGE_CAMERA;//PAGE_INTERCOM;
-	camSetParam.volumeSet =5 ;   //初始 音量设置(0-10);
+	camSetParam.volumeSet =5 ;   //初始6 音量设置(0-10);
 	camSetParam.languageType=1;
 	
 	volume_adjust(camSetParam.volumeSet);
@@ -1743,6 +1890,7 @@ void fly_info_init(void)
 
 
 
+extern uint8 g_code_sema_init ;
 
 void fly_demo(void)
 {
@@ -1751,12 +1899,23 @@ void fly_demo(void)
 
 	//fly_info_init();
 	lv_page_init();
+	
+	intercom_init(); 
+	
+	for (int i = 0; i < 200; i++) {     // 200 * 10ms = 2s
+        if (g_code_sema_init) break;
+        os_sleep_ms(10);
+    }
+	
+    // 初始状态下先挂起语音编解码，仅保持 UDP 监听
+    intercom_suspend();
+	
 	poweron_welcome();
 	lv_time_set();
 	printf("## fly_demo 3\n");
 
 }
-
+ 
 
 void cfg_vediop1_bg_img(void)
 {
@@ -1781,7 +1940,7 @@ void cfg_vediop1_bg_img(void)
 		 }
 		
 	}
-	setFlag=1;
+	setFlag=1; 
 #endif
 	printf("\n ## cfg_vediop1_bg_img 2");
 	lcd_info.lcd_p0p1_state = 2;
@@ -1813,6 +1972,8 @@ void cfg_vediop1_bg_img(void)
 
 extern uint8_t pro_page_cur;
 extern uint8_t un_viewSwitch_flag;
+static uint8_t intercom_cleanup_in_progress = 0;
+
 void lv_page_select(uint8_t page)
 {
 	uint8_t name[16];
@@ -1821,11 +1982,30 @@ void lv_page_select(uint8_t page)
 	
 	lcd_dev = (struct lcdc_device *)dev_get(HG_LCDC_DEVID);	
 	vpp_dev = (struct vpp_device *)dev_get(HG_VPP_DEVID);
-
+	
+	/* 离开微聊页：先关视频层，避免残影/后台视频继续跑 */
+    if (camera_gvar.page_cur == PAGE_WECHAT && page != PAGE_WECHAT) {
+        bbm_displaydecode_run = 0;          // 确保不再解码图传
+        lcdc_set_video_en(lcd_dev, 0);      // 直接关掉视频层输出
+        // 如你发现还有硬件占用/花屏，可再加：vpp_close(vpp_dev);
+        lcd_info.lcd_p0p1_state = 2;        // 回到全屏UI态（可选）
+    }
+	
+	// 如果从对讲页面切换出去，需要清理资源
+	if (camera_gvar.page_cur == PAGE_INTERCOM && page != PAGE_INTERCOM) {
+		intercom_audio_active = 0;     // 先让 encode/recv 逻辑走“非对讲”路径
+		intercom_encode_switch(0);     // 先停麦克风编码
+		mute_speaker(1);               // 先静音
+		intercom_suspend();            // 最后停 timer/清缓存
+    }
+	
 	camera_gvar.page_back = camera_gvar.page_cur;
 	camera_gvar.page_cur = page;
-	printf("camera_gvar.page_cur:%d\r\n",page);
+	printf("Page switch: %d -> %d\r\n", camera_gvar.page_back, page);
 	pro_page_cur=camera_gvar.page_cur;
+	if (camera_gvar.page_back == PAGE_HOME && page != PAGE_HOME) {
+		home_overlays_hide();   // 离开 HOME 就隐藏
+	}
 	if(page == PAGE_HOME){
 #ifdef  P0P1_SWITCH
 	{
@@ -1851,6 +2031,24 @@ void lv_page_select(uint8_t page)
 		}
 
 		ui_homePage_screen_init();		
+	}
+	else if(page == PAGE_WECHAT)
+	{
+		/* 微聊页：目前只做纯 UI，不用视频小窗，关掉图传解码 */
+		bbm_displaydecode_run = 0;
+		
+//		struct lcdc_device *lcd_dev;
+//		lcd_dev = (struct lcdc_device *)dev_get(HG_LCDC_DEVID);
+//		lcdc_set_video_en(lcd_dev, 0);
+
+		lcd_info.lcd_p0p1_state = 2;   // 统一成全屏 UI 模式
+
+		if (curPage_obj) {
+			lv_obj_del(curPage_obj);
+			printf("## delete old page, go to WECHAT\n");
+			curPage_obj = NULL;
+		}
+		ui_wechatPage_screen_init();	
 	}
 	else if(page == PAGE_INTERCOM){	
 
@@ -1889,17 +2087,47 @@ void lv_page_select(uint8_t page)
 		
 		scale_to_lcd_config();
 
-
+		// 启动视频显示
 		lcdc_set_video_en(lcd_dev,1);
 		bbm_displaydecode_run =1;
+		printf("pair_success = %u\n", camera_gvar.pair_success);
+		
+//		if (camera_gvar.pair_success == 1) 
+//		{
+//			lcd_pair_success = 1;  // 继承主页的配对成果，允许显示
+//			printf("!!! TRAP: lcd_pair_success set to 1 in %s at line %d !!!\n", __func__, __LINE__);
+//		}else {
+//			lcd_pair_success = 0;  // 还没配对，显示背景，等待后续配对流程
+//			printf("!!! TRAP: lcd_pair_success set to 0 in %s at line %d !!!\n", __func__, __LINE__);
+//		}
+	
+		uint8_t link_ok = (sys_status.pair_success || g_pair_link_ok || get_wifi_connect_flag());
+
+		if (link_ok) {
+			lcd_pair_success = 1;
+			printf("!!! TRAP: lcd_pair_success set to 1 in %s at line %d !!!\n", __func__, __LINE__);
+		} else {
+			lcd_pair_success = 0;
+			printf("!!! TRAP: lcd_pair_success set to 0 in %s at line %d !!!\n", __func__, __LINE__);
+		}
+		printf("Intercom: Video display started\r\n");
+		
+		os_sleep_ms(500);// 等待视频稳定
+
+		// 恢复语音流
+        intercom_resume();         // 恢复语音调度
+        intercom_encode_switch(1); // 开启麦克风编码
+        mute_speaker(0);          // 开启喇叭
+        intercom_audio_active = 1;
+		
+		
 		un_viewSwitch_flag = 0;
-		lcd_pair_success = 0;
 		rec_open  = 0;
 		photo_flag = 0;
 		if(curPage_obj){
 			//lv_obj_clean(curPage_obj);
 			lv_obj_del(curPage_obj);
-			printf("## come to here \n");
+			printf("## come to here \r\n");
 			curPage_obj = NULL;
 		}
 
@@ -1982,11 +2210,11 @@ void lv_page_select(uint8_t page)
 			bbm_displaydecode_run =0;
 		}
 	#endif
-		lcd_info.lcd_p0p1_state = 2;
+		lcd_info.lcd_p0p1_state = 2;  // 开启video p1层，用于初始网格界面背景显示和图片选中后的大图查看
 		//lcdc_set_video_en(lcd_dev,0);
 		video_decode_mem  = video_decode_config_mem;
-		video_decode_mem1 = video_decode_config_mem;
-		video_decode_mem2 = video_decode_config_mem;	
+		video_decode_mem1 = video_decode_config_mem1;
+		video_decode_mem2 = video_decode_config_mem2;	
 		bbm_displaydecode_run =0;
 
 		#if 1
@@ -1999,7 +2227,7 @@ void lv_page_select(uint8_t page)
 		}
 		#endif
 		
-		camera_gvar.album_filenums=scan_album_files();
+//		camera_gvar.album_filenums=scan_album_files();
 
 
 		jpg_dec_scale_del();
@@ -2009,25 +2237,9 @@ void lv_page_select(uint8_t page)
 		set_lcd_photo1_config(SCALE_WIDTH,SCALE_HIGH,0);
 		#endif
 		jpg_decode_scale_config((uint32)video_decode_mem);
-
-		if(camera_gvar.album_filenums)
-		{
-			#if 1
-			album_cur_selected = album_list_tail;
-			print_album_list();
-			sprintf((char *)name_rec_photo,"%s%s","0:DCIM/",album_cur_selected->name);
-			album_file_preview(name_rec_photo,album_cur_selected->filetype);	
-			#else
-			camera_gvar.album_fileindex =(camera_gvar.album_filenums-1);
-			printf("ablumlist[%d].name:%s \n",camera_gvar.album_fileindex,ablumlist[camera_gvar.album_fileindex].name);
-			sprintf((char *)name_rec_photo,"%s%s","0:DCIM/",ablumlist[camera_gvar.album_filenums-1].name);
-
-			printf("name_rec_photo:%s\r\n",name_rec_photo);
-			album_file_preview(name_rec_photo,ablumlist[camera_gvar.album_fileindex].filetype);	
-			#endif
-		}
 		
-		lcdc_set_video_en(lcd_dev,1);
+		cfg_vediop1_bg_img();
+		lcdc_set_video_en(lcd_dev,1);  //开启背景层（video p1）
 		//vpp_close(vpp_dev);
 
 		if(curPage_obj){
@@ -2037,7 +2249,33 @@ void lv_page_select(uint8_t page)
 			curPage_obj = NULL;
 		}
 
-		ui_albumPage_screen_init();
+		ui_albumPage_screen_init();   // 相册界面ui初始化
+
+		// 添加调用频率限制和状态检查，防止重复初始化
+		static uint32_t last_album_init_time = 0;
+		static bool album_init_calling = false;
+		uint32_t current_time = os_jiffies();
+
+		// 检查是否正在初始化或距离上次调用时间太短
+		if (!album_init_calling &&
+		    (current_time - last_album_init_time) >= 25) { // 25ms保护间隔 (约500ms @ 20ms tick)
+
+			album_init_calling = true;
+			last_album_init_time = current_time;
+
+			// 相册初始化（开启照片缩略）,理论上应该提前进行缩略处理，减少延时
+			uint8_t rb = album_page_init();
+			if(rb != 0){
+				printf("### album_page_init error!!! \r\n");
+			}
+
+			album_init_calling = false;
+		} else {
+			// 跳过重复调用，避免破坏FileNode链表
+			printf("### Skipping album_page_init - already in progress or too soon (interval: %d ticks)\r\n",
+			       (int)(current_time - last_album_init_time));
+		} 
+
 	}
 
 	else if(page == PAGE_SET){
@@ -2106,14 +2344,12 @@ void lv_page_select(uint8_t page)
 			}
 			lv_page_poweroff_menu_config();
 	}
-#endif
+#endif	 
 	else 
 	{
 		printf("## PAGE select err !!! \r\n");
-		page == PAGE_INTERCOM;
-		lv_page_select(PAGE_INTERCOM);
+		lv_page_select(PAGE_HOME);
 
 	}
 	
 }
-

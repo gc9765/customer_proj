@@ -82,7 +82,7 @@ void bbm_take_photo(uint8_t num)
             num = 1;
         }
         photo_s->photo_num = num;
-        
+//        photo_s->running = 1 ;
         OS_TASK_INIT("at_photo", &photo_s->task, at_save_photo_thread, (uint32)photo_s, OS_TASK_PRIORITY_NORMAL, 1024);  
     }
 }
@@ -91,10 +91,8 @@ uint8_t get_bbm_take_photo_status(void)
 {
     if(photo_s)
     {
-		os_printf("## photo_s->running\n");
         return photo_s->running;
     }
-	os_printf("## get_bbm_take_photo_status == 0\n");
     return 0;
 }
 
@@ -122,13 +120,31 @@ static int opcode_func(stream *s,void *priv,int opcode)
 	return res;
 }
 
+
+static uint32_t photo_find_free_index(const char *prefix)
+{
+    char path[64];
+    void *fp;
+
+    for (uint32_t i = 1; i <= 9999; i++) {
+        os_sprintf(path, "0:/DCIM/%sJPEG%04u.jpg", prefix ? prefix : "", (unsigned)i);
+        fp = osal_fopen(path, "rb");     // 只用来探测是否存在
+        if (!fp) return i;               // 不存在 -> 可用
+        osal_fclose(fp);
+    }
+    return 1; // 极端情况：都占满了就从1开始（你也可以改成报错）
+}
+
+
 extern int no_frame_record_video2(void *fp,void *d,int flen);
+char g_last_shot_path[64] = {0};
 void at_save_photo_thread(void *d)
 {
     struct data_structure *get_f = NULL;
     struct AT_PHOTO *p_s = (struct AT_PHOTO *)d;
     stream *s = NULL;
     uint32_t flen;
+	uint32_t idx = 1;
     char filename[64] = {0};
     s = open_stream_available(R_AT_SAVE_PHOTO,0,8,opcode_func,NULL);
     if(!s)
@@ -138,26 +154,17 @@ void at_save_photo_thread(void *d)
     p_s->running = 1;
     void *fp = NULL;
     uint32_t err_count = 0;
-	
-	// 添加目录创建(否则格式化之后路径会消失，需要重新创建)
-    DIR dir;
-    FRESULT ret = f_opendir(&dir, "0:/DCIM");
-    if(ret != FR_OK){
-        os_printf("Creating DCIM directory...\n");
-        f_mkdir("0:/DCIM");
-    } else {
-        f_closedir(&dir);
-    }
-	
     start_jpeg();
+	idx = photo_find_free_index((const char *)p_s->filename_prefix);
     while(p_s->photo_num && p_s->running)
     {
         get_f = recv_real_data(s);
         if(get_f)
         {
             err_count = 0;
-            os_sprintf(filename,"0:/DCIM/%sJPEG%04d.jpg",p_s->filename_prefix,(uint32_t)os_jiffies()%9999);
+            os_sprintf(filename,"0:/DCIM/%sJPEG%04u.jpg",(const char *)p_s->filename_prefix,(unsigned)idx);
             os_printf("filename:%s\n",filename);
+			strcpy(g_last_shot_path, filename);
             fp = osal_fopen(filename,"wb+");
             if(!fp)
             {
@@ -170,6 +177,8 @@ void at_save_photo_thread(void *d)
             get_f = NULL;
             osal_fclose(fp);
             p_s->photo_num--;
+			idx++;
+			if (idx > 9999) idx = 1; 
         }
         else
         {

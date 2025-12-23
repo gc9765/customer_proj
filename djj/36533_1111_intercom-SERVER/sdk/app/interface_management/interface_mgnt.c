@@ -482,7 +482,7 @@ void lvgl_init(uint16_t w,uint16_t h,uint8_t rotate){
 	lv_uvc_display();	
 #endif
 
-	os_task_create("gui_thread", lvgl_run, NULL, OS_TASK_PRIORITY_NORMAL, 0, NULL, 4096);
+	os_task_create("gui_thread", lvgl_run, NULL, OS_TASK_PRIORITY_NORMAL, 0, NULL, 1024*10);
 
 }
 #endif

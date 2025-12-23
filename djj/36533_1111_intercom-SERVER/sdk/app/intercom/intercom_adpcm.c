@@ -125,6 +125,17 @@ void lose_packet_check(void);
 static struct os_timer ctl_timer;
 void decode_sem_up(uint32 *args);
 
+volatile uint8_t intercom_audio_active = 0;  
+volatile uint8_t intercom_page_active = 0;   // 页面激活状态
+volatile uint8_t g_intercom_rt_enable = 0;     // 1=对讲页实时对讲 0=非对讲页
+volatile uint8_t g_intercom_audio_enable = 1;  // 1=允许对讲音频编码/解码 0=全部停
+volatile uint8_t g_wechat_tx_active = 0;       // 1=微信语音发送中（mic开/喇叭关
+// 添加外部变量声明
+extern volatile uint8_t bbm_displaydecode_run;  // 视频显示状态
+extern volatile uint8_t camera_gvar_page_cur;    // 当前页面（需要从fly_demo.c导出）
+
+
+
 void intercom_init(void)
 {
 #if INTERCOM_SERVER
@@ -222,46 +233,55 @@ static void free_room(void)
 		sort_buf = NULL;
 	}
 }
-uint32_t intercom_push_key(struct key_callback_list_s *callback_list,uint32_t keyvalue,uint32_t extern_value)
-{
-	if( (keyvalue>>8) != AD_PRESS)
-		return 0;
-	uint32 key_val = (keyvalue & 0xff);
-	if((key_val == KEY_EVENT_DOWN) || (key_val == KEY_EVENT_LDOWN) || (key_val == KEY_EVENT_REPEAT)) {
-		g_transfer_mode = SEND_MODE;
-	}
-	else if((key_val == KEY_EVENT_SUP) || (key_val == KEY_EVENT_LUP)) {
-		g_transfer_mode = RECV_MODE;
-	}
-	return 0;
-}
+//uint32_t intercom_push_key(struct key_callback_list_s *callback_list,uint32_t keyvalue,uint32_t extern_value)
+//{
+//	if( (keyvalue>>8) != AD_PRESS)
+//		return 0;
+//	uint32 key_val = (keyvalue & 0xff);
+//	if((key_val == KEY_EVENT_DOWN) || (key_val == KEY_EVENT_LDOWN) || (key_val == KEY_EVENT_REPEAT)) {
+//		g_transfer_mode = SEND_MODE;
+//	}
+//	else if((key_val == KEY_EVENT_SUP) || (key_val == KEY_EVENT_LUP)) {
+//		g_transfer_mode = RECV_MODE;
+//	}
+//	return 0;
+//}
 
 extern void audio_adc_mute(void);
 extern void audio_adc_unmute(void);
 
-uint32_t intercom_push_key2(struct key_callback_list_s *callback_list,uint32_t keyvalue,uint32_t extern_value)
+//uint32_t intercom_push_key2(struct key_callback_list_s *callback_list,uint32_t keyvalue,uint32_t extern_value)
+//{
+//	if( (keyvalue>>8) != KEY_CALL)
+//		return 0;
+//	uint32 key_val = (keyvalue & 0xff);
+//	if((key_val == KEY_EVENT_DOWN) || (key_val == KEY_EVENT_LDOWN) || (key_val == KEY_EVENT_REPEAT)) {
+//		mute_speaker(1);
+//		audio_dac_set_filter_type(SOUND_NONE);
+//
+//		audio_adc_unmute();
+//
+//	}
+//	else if((key_val == KEY_EVENT_SUP) || (key_val == KEY_EVENT_LUP)) {
+//		audio_adc_mute();
+//		mute_speaker(0);
+//		audio_dac_set_filter_type(SOUND_INTERCOM);
+//
+//	}
+//	return 0;
+//}
+
+
+
+static uint8_t g_send_mutex_inited = 0;
+
+static void intercom_send_mutex_ensure(void)
 {
-	if( (keyvalue>>8) != KEY_CALL)
-		return 0;
-	uint32 key_val = (keyvalue & 0xff);
-	if((key_val == KEY_EVENT_DOWN) || (key_val == KEY_EVENT_LDOWN) || (key_val == KEY_EVENT_REPEAT)) {
-		mute_speaker(1);
-		audio_dac_set_filter_type(SOUND_NONE);
-
-		audio_adc_unmute();
-
-	}
-	else if((key_val == KEY_EVENT_SUP) || (key_val == KEY_EVENT_LUP)) {
-		audio_adc_mute();
-		mute_speaker(0);
-		audio_dac_set_filter_type(SOUND_INTERCOM);
-
-	}
-	return 0;
+    if (!g_send_mutex_inited) {
+        os_mutex_init(&send_mutex);
+        g_send_mutex_inited = 1;
+    }
 }
-
-
-
 
 
 int intercom_server_init(void)
@@ -276,19 +296,17 @@ int intercom_server_init(void)
 	intercom->ack_sfd = socket(AF_INET,SOCK_DGRAM,0);
 
 #if DUPLEX_TYPE == HALF_DUPLEX
-	add_keycallback(intercom_push_key,NULL);
+//	add_keycallback(intercom_push_key,NULL);
 #endif
-	add_keycallback(intercom_push_key2,NULL);
+//	add_keycallback(intercom_push_key2,NULL);
 	if((intercom->udp_sfd==-1) || (intercom->ack_sfd==-1)) {
 		os_printf("\nerr:%s %d",__FUNCTION__,__LINE__);
 		goto intercom_server_init_err;
 	}
-
 	if(setsockopt(intercom->udp_sfd,SOL_SOCKET,SO_RCVTIMEO,(char *)&time_out,sizeof(int)) == -1) {
 		os_printf("\nerr:%s %d",__FUNCTION__,__LINE__);
 		goto intercom_server_init_err;
 	}
-
 	OS_TASK_INIT("intercom_server_handle", &intercom_server_handle_task, intercom_server_handle,  NULL, OS_TASK_PRIORITY_NORMAL, 1024);
 	return 0;
 	
@@ -322,7 +340,7 @@ int intercom_client_init(void)
 		goto intercom_client_init_err;
 	}
 // #endif
-	add_keycallback(intercom_push_key2,NULL);
+//	add_keycallback(intercom_push_key2,NULL);
 
     OS_TASK_INIT("intercom_client_handle", &intercom_client_handle_task, intercom_client_handle,  NULL, OS_TASK_PRIORITY_NORMAL, 1024);
 	return 0;
@@ -1243,6 +1261,13 @@ void intercom_recv(void *d)
 	{		
 	#if INTERCOM_SERVER            
 		rlen = recvfrom(intercom->udp_sfd, recv_buf, ENCODED_BUF_BYTE*NUM_OF_FRAME, 0, (struct sockaddr*)&(intercom->udp_c_addr), &addrlen);
+		/* 微信扩展包分流 */
+		if (rlen > 0 && recv_buf[0] == 0x57) {
+			wechat_msg_on_rx_from_intercom(recv_buf, (uint16_t)rlen);
+			continue;
+		}
+
+		
 		if(memcmp(&intercom->udp_c_addr.sin_addr,&intercom->ack_c_addr.sin_addr,sizeof(struct in_addr)) != 0)
 			memcpy(&intercom->ack_c_addr.sin_addr,&intercom->udp_c_addr.sin_addr,sizeof(struct in_addr));
 		if(rlen <= 0) {
@@ -1285,6 +1310,18 @@ void intercom_recv(void *d)
 		}
 	#elif INTERCOM_CLIENT
 		rlen = recvfrom(intercom->udp_cfd, recv_buf, ENCODED_BUF_BYTE*NUM_OF_FRAME, 0, (struct sockaddr*)&(intercom->udp_s_addr), &addrlen);
+		
+		/* 微信扩展包分流：magic=0x57  */
+		if (rlen > 0 && recv_buf[0] == 0x57) {
+			wechat_msg_on_rx_from_intercom(recv_buf, (uint16_t)rlen);
+			continue;
+		}/* 微信扩展包分流：magic=0x57 */
+		
+		// 检查音频是否允许运行（对讲页面的 active 状态）
+        if(intercom_audio_active == 0) {
+            continue; // 如果不在对讲页，直接丢弃音频包，Socket 不关，但音频流不进队列
+        }
+		
 		if((play_start_flag&BIT(1)) == 0) {
 			continue;
 		}	
@@ -1307,6 +1344,9 @@ void intercom_recv(void *d)
 		#endif		
 		}							
 	#endif
+		if(intercom_audio_active == 0) {
+            continue; 
+        }
 		if(rlen >= RESERVE)
 		{
 			offset = 0;
@@ -1364,6 +1404,41 @@ void intercom_recv(void *d)
 	}
 }
 
+
+/* intercom 收到聊天扩展包后调用这里 */
+extern void wechat_msg_on_rx_from_intercom(const uint8_t *data, uint16_t len);
+
+/* 复用 intercom UDP socket 发送一包“非音频”的原始 payload */
+int intercom_chat_send_raw(const uint8_t *payload, uint16_t len)
+{
+    if (!payload || len == 0) return -1;
+    if (!intercom) return -2;
+    if (len > 1472) return -3;
+
+#if INTERCOM_SERVER
+    if (intercom->udp_sfd == -1) return -4;
+#elif INTERCOM_CLIENT
+    if (intercom->udp_cfd == -1) return -4;
+#endif
+
+    if (os_mutex_lock(&send_mutex, -1) < 0) return -5;
+
+    int slen = -1;
+#if INTERCOM_SERVER
+    slen = sendto(intercom->udp_sfd, payload, len, 0,
+                  (struct sockaddr*)&(intercom->udp_c_addr),
+                  sizeof(intercom->udp_c_addr));
+#elif INTERCOM_CLIENT
+    slen = sendto(intercom->udp_cfd, payload, len, 0,
+                  (struct sockaddr*)&(intercom->udp_s_addr),
+                  sizeof(intercom->udp_s_addr));
+#endif
+
+    os_mutex_unlock(&send_mutex);
+    return (slen == (int)len) ? 0 : -6;
+}
+
+
 void mute_speaker(uint8 enable)
 {
 	gpio_set_mode(PIN_SPK_MUTE, GPIO_PULL_NONE, GPIO_PULL_LEVEL_NONE);
@@ -1372,6 +1447,7 @@ void mute_speaker(uint8 enable)
 	int val = gpio_set_val(PIN_SPK_MUTE, enable);
 	os_printf("PA_7 current value: %d\n", val);
 }
+
 
 void decode_sem_up(uint32 *args)
 {
@@ -1422,6 +1498,14 @@ void intercom_encoded_handle(void *d)
 	while(1)
 	{
 		os_sema_down(sem,-1);
+		
+		// 检查是否还在对讲页面且视频正常
+		if(!intercom_audio_active || !bbm_displaydecode_run) {
+            get_f = recv_real_data(intercom->recv_s); // 读出麦克风数据
+            if(get_f) free_data(get_f); // 丢弃，防止数据积压
+            continue;
+        }
+		
 		get_f = recv_real_data(intercom->recv_s);
 		current_adc_data = get_f;
 		ret = os_mutex_lock(&send_mutex,-1);
@@ -1851,6 +1935,7 @@ void intercom_decoded_handle(void *d)
 	#endif		
 	}
 }
+
 
 void intercom_encode_switch(uint8 enable)
 {

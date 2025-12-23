@@ -7,7 +7,7 @@ Project_Title:
 
 Project_PreBuild:
 	@echo Executing Pre Build commands ...
-	@export CDKPath="D:/C-Sky/CDK" CDK_VERSION="V2.8.8" ProjectPath="D:/Work/Customer_Engineering/Djj/36533_1111_intercom-SERVER/project/" && D:/Work/Customer_Engineering/Djj/36533_1111_intercom-SERVER/project/prebuild.sh $<
+	@export CDKPath="D:/C-Sky/CDK" CDK_VERSION="V2.24.14" CPU="CK803S" ProjectName="fpv_app_umac4" ProjectPath="D:/Work/Customer_Engineering/36533_1111_intercom - SERVER_w/36533_1111_intercom - SERVER/project/" && "D:/Work/Customer_Engineering/36533_1111_intercom - SERVER_w/36533_1111_intercom - SERVER/project/prebuild.sh" $<
 	@echo Done
 
 Project_Build:
@@ -15,7 +15,7 @@ Project_Build:
 
 Project_PostBuild:
 	@echo Executing Post Build commands ...
-	@export CDKPath="D:/C-Sky/CDK" CDK_VERSION="V2.8.8" ProjectPath="D:/Work/Customer_Engineering/Djj/36533_1111_intercom-SERVER/project/" && D:/Work/Customer_Engineering/Djj/36533_1111_intercom-SERVER/project/BuildBIN.sh
+	@export CDKPath="D:/C-Sky/CDK" CDK_VERSION="V2.24.14" CPU="CK803S" ProjectName="fpv_app_umac4" ProjectPath="D:/Work/Customer_Engineering/36533_1111_intercom - SERVER_w/36533_1111_intercom - SERVER/project/" && "D:/Work/Customer_Engineering/36533_1111_intercom - SERVER_w/36533_1111_intercom - SERVER/project/BuildBIN.sh"
 	@echo Done
 
 

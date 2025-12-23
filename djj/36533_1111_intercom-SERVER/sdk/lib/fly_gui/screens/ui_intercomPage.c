@@ -59,122 +59,17 @@ extern void client_send_sleep_cmd(uint8_t cnt);
 
 uint8_t sundtype =0;
 uint8_t cur_volumeSet =0;
-#if 0
-void create_confirm_dialog(lv_obj_t *parent, lv_event_cb_t confirm_cb, lv_event_cb_t cancel_cb)
-{
-    /* -------------------- 1. 通用背景遮罩 -------------------- */
-    lv_obj_t *bg = lv_obj_create(parent);
-    lv_obj_set_size(bg, lv_pct(100), lv_pct(100));  // 占满父对象（屏幕）
-    lv_obj_set_style_bg_color(bg, lv_color_black(), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_opa(bg, LV_OPA_50, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_clear_flag(bg, LV_OBJ_FLAG_SCROLLABLE);  // 禁止滚动
-
-    /* -------------------- 2. 对话框容器（自适应布局） -------------------- */
-    lv_obj_t *dialog = lv_obj_create(bg);
-    lv_obj_set_width(dialog, lv_pct(60));  // 父对象宽度的60%（自适应屏幕）
-    lv_obj_center(dialog);  // 居中显示
-    lv_obj_set_style_bg_color(dialog, lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_radius(dialog, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_clear_flag(dialog, LV_OBJ_FLAG_SCROLLABLE);
-
-    /* -------------------- 3. 消息文本（兼容默认字体） -------------------- */
-    lv_obj_t *msg = lv_label_create(dialog);
-    lv_label_set_text(msg, "对讲已连接，是否确定退出？");
-    // 使用 LVGL 默认字体（无需额外加载）
-    lv_obj_set_style_text_font(msg, &lv_font_default, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_color(msg, lv_color_hex(0x333333), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_align(msg, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);  // 居中对齐
-    lv_obj_align(msg, LV_ALIGN_CENTER, 0, -20);  // 顶部留白20px
-
-    /* -------------------- 4. 按钮容器（弹性布局） -------------------- */
-    lv_obj_t *btn_cont = lv_obj_create(dialog);
-    lv_obj_set_size(btn_cont, lv_pct(90), LV_SIZE_CONTENT);  // 对话框宽度的90%
-    lv_obj_set_layout(btn_cont, LV_LAYOUT_FLEX);
-    lv_obj_set_flex_flow(btn_cont, LV_FLEX_FLOW_ROW);  // 水平排列
-    lv_obj_set_flex_align(btn_cont, LV_FLEX_ALIGN_SPACE_EVENLY,  // 按钮等间距
-                         LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_clear_flag(btn_cont, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_align(btn_cont, LV_ALIGN_BOTTOM_MID, 0, 20);  // 底部留白20px
-
-    /* -------------------- 5. 取消按钮（通用样式） -------------------- */
-    lv_obj_t *btn_cancel = lv_btn_create(btn_cont);
-    lv_obj_set_size(btn_cancel, lv_pct(45), 40);  // 按钮容器宽度的45%
-    lv_obj_set_style_border_color(btn_cancel, lv_color_hex(0xD9D9D9), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_border_width(btn_cancel, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_radius(btn_cancel, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_color(btn_cancel, lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_color(btn_cancel, lv_color_hex(0xF5F5F5), LV_PART_MAIN | LV_STATE_PRESSED);  // 按下反馈
-    lv_obj_add_event_cb(btn_cancel, cancel_cb, LV_EVENT_CLICKED, dialog);  // 传递对话框对象
-
-    lv_obj_t *label_cancel = lv_label_create(btn_cancel);
-    lv_label_set_text(label_cancel, "取消");
-    lv_obj_set_style_text_font(label_cancel, &lv_font_default, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_color(label_cancel, lv_color_hex(0x666666), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_center(label_cancel);
-
-    /* -------------------- 6. 确认按钮（强调样式） -------------------- */
-    lv_obj_t *btn_confirm = lv_btn_create(btn_cont);
-    lv_obj_set_size(btn_confirm, lv_pct(45), 40);
-    lv_obj_set_style_bg_color(btn_confirm, lv_color_hex(0xFF4D4F), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_color(btn_confirm, lv_color_hex(0xCC3D3F), LV_PART_MAIN | LV_STATE_PRESSED);  // 按下反馈
-    lv_obj_set_style_radius(btn_confirm, 4, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_add_event_cb(btn_confirm, confirm_cb, LV_EVENT_CLICKED, dialog);
-
-    lv_obj_t *label_confirm = lv_label_create(btn_confirm);
-    lv_label_set_text(label_confirm, "确定");
-    lv_obj_set_style_text_font(label_confirm, &lv_font_default, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_text_color(label_confirm, lv_color_white(), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_center(label_confirm);
-}
-
-/**
- * 确认按钮回调（示例）
- */
-static void confirm_event_handler(lv_event_t *e)
-{
-    lv_obj_t *dialog = lv_event_get_user_data(e);
-    lv_obj_t *bg = lv_obj_get_parent(dialog);  // 获取背景遮罩
-    printf("执行退出对讲操作\n");
-    lv_obj_del(bg);  // 删除整个对话框及遮罩
-}
-
-/**
- * 取消按钮回调（示例）
- */
-static void cancel_event_handler(lv_event_t *e)
-{
-    lv_obj_t *dialog = lv_event_get_user_data(e);
-    lv_obj_t *bg = lv_obj_get_parent(dialog);
-    printf("取消退出操作\n");
-    lv_obj_del(bg);  // 删除整个对话框及遮罩
-}
-void show_dialog_example(void)
-{
-    create_confirm_dialog(ui_intercomPage, confirm_event_handler, cancel_event_handler);
-}
-#endif
-
-// static void event_cb(lv_event_t * e)
-// {
-//     lv_obj_t * obj = lv_event_get_current_target(e);
-//     LV_LOG_USER("Button %s clicked", lv_msgbox_get_active_btn_text(obj));
-// }
-// void lv_example_msgbox_1(void)
-// {
-//     #if 0
-//     static const char * btns[] = {"Apply", "Close", ""};
-//     lv_obj_t * mbox1 = lv_msgbox_create(NULL, "Hello", "This is a message box with two buttons.", btns, true);
-//     #else
-//     static const char * btns[] = {"取消", "确定",""};
-//     lv_obj_t * mbox1 = lv_msgbox_create(NULL, "notice", "是否退出？ ", btns, false);
-//     #endif
-
-//     lv_obj_add_event_cb(mbox1, event_cb, LV_EVENT_VALUE_CHANGED, NULL);
-//     lv_obj_center(mbox1);
-// }
 
 
+extern volatile uint8_t g_intercom_rt_enable;
+extern volatile uint8_t g_intercom_audio_enable;
 
+extern void intercom_encode_switch(uint8 enable);
+extern void intercom_init(void);
+extern void intercom_suspend(void);
+extern void intercom_resume(void);
+extern volatile uint8_t intercom_audio_active;  // 对讲语音激活状态
+extern volatile uint8_t intercom_page_active;
 
 volatile uint8_t p0p1_switch_flag=0;
 
@@ -242,9 +137,9 @@ void un_view_switch(uint8_t p0p1_flag)
 
 						//os_sleep_ms(10);	
 						bbm_displaydecode_run =1; 											
-			break;
+				break;
 
-		case 1 :  //P1__video  P0_bg
+			case 1 :  //P1__video  P0_bg
 						os_sleep_ms(10);
 						delay_open_lcd_flash(4);
 
@@ -265,10 +160,10 @@ void un_view_switch(uint8_t p0p1_flag)
 						lcd_info.lcd_p0p1_state = 3;
 						os_sleep_ms(10);
 						bbm_displaydecode_run =1;												
-			break;
+				break;
 
 
-case 2 :  //_video_all
+			case 2 :  //_video_all
 	
 						os_sleep_ms(10);
 						delay_open_lcd_flash(4);
@@ -282,8 +177,8 @@ case 2 :  //_video_all
 						lcd_info.lcd_p0p1_state = 2;
 						os_sleep_ms(10);
 						bbm_displaydecode_run =1;	
-			break;
-		case 3 :  //__bg_all
+				break;
+			case 3 :  //__bg_all
 						os_sleep_ms(10);
 						delay_open_lcd_flash(4);
 						jpg_dec_scale_del();						
@@ -298,9 +193,9 @@ case 2 :  //_video_all
 						bbm_displaydecode_run =1; 			
 				break;
 		
-		default:
-			printf("## un_view_switch ERR!!!!!  un_viewSwitch_flag_flag ==%d \r\n",p0p1_flag);
-			break;
+			default:
+				printf("## un_view_switch ERR!!!!!  un_viewSwitch_flag_flag ==%d \r\n",p0p1_flag);
+				break;
 	}
 			
 	printf("## un_view_switch end OK****  un_viewSwitch_flag_flag ==%d \r\n",p0p1_flag);
@@ -370,14 +265,7 @@ if(p0p1_flag)
 			scale3_num =0;
 			decode_num=0;
 
-#if 0
-			hw_memset(video_decode_mem,0,(SCALE_CONFIG_W*SCALE_HIGH+SCALE_CONFIG_W*SCALE_HIGH/2));
-			hw_memset(video_decode_mem1,0,(SCALE_CONFIG_W*SCALE_HIGH+SCALE_CONFIG_W*SCALE_HIGH/2));
-			hw_memset(video_decode_mem2,0,(SCALE_CONFIG_W*SCALE_HIGH+SCALE_CONFIG_W*SCALE_HIGH/2));
-			hw_memset(video_psram_mem,0,(SCALE_CONFIG_W*SCALE_HIGH+SCALE_CONFIG_W*SCALE_HIGH/2));
-			hw_memset(video_psram_mem1,0,(SCALE_CONFIG_W*SCALE_HIGH+SCALE_CONFIG_W*SCALE_HIGH/2));
-			hw_memset(video_psram_mem2,0,(SCALE_CONFIG_W*SCALE_HIGH+SCALE_CONFIG_W*SCALE_HIGH/2));
-#endif
+
 		}
 		p0p1_switch_flag=1;
 
@@ -479,6 +367,8 @@ if(p0p1_flag)
 #endif
 }
 extern uint8_t  lcd_pair_success;
+extern uint8_t s_wechat_focus_idx ; 
+
 void ui_event_intercomPage(lv_event_t * e){
 	uint32_t* key_val = (uint32_t*)e->param;
 	lv_event_code_t code = lv_event_get_code(e);
@@ -542,28 +432,33 @@ void ui_event_intercomPage(lv_event_t * e){
 			
 			case AD_BACK:
 			case KEY_BACK:    //退出对讲
+//				// 关闭对讲语音
+//				printf("Intercom: Starting exit process...\r\n");
+//			  // 1. 标记开始退出流程
+//			  intercom_page_active = 0;
+//
+//			  // 2. 停止语音服务
+//				if(intercom_audio_active) {
+//					printf("Intercom: Stopping audio services...\r\n");
+//					intercom_audio_active = 0;
+//					g_intercom_rt_enable = 0;
+//					g_intercom_audio_enable = 0;
+//					intercom_encode_switch(0);
+//					intercom_suspend();
+//					os_sleep_ms(100);
+//				}
+				// 关闭视频显示
+				bbm_displaydecode_run = 0;
 
+				ipf_update_flag = 1;			
+				rahmen_open =0;
+				lcd_pair_success = 0;
+	//			lv_page_select(PAGE_WECHAT);
+	//			s_wechat_focus_idx = 0;
+	//			wechat_update_focus_style();
+				wechat_request_focus_idx(0);
+				lv_page_select(PAGE_WECHAT);
 
-			if(get_net_pair_status())
-				userPairstop();
-			
-			printf("##=========== exit pair mode  \n");
-
-			if (sys_cfgs.wifi_mode == WIFI_MODE_STA) {
-				ieee80211_iface_stop(WIFI_MODE_STA);
-				
-			}
-			else
-			{
-				//if ap  connect sta
-				ieee80211_disassoc_all(WIFI_MODE_AP);
-				os_memset(sys_cfgs.bssid, 0, 6);
-				syscfg_save();
-			}
-			ipf_update_flag = 1;			
-			rahmen_open =0;
-			lcd_pair_success = 0;
-			lv_page_select(PAGE_HOME);
 			break;
 
 
@@ -635,15 +530,6 @@ void ui_event_intercomPage(lv_event_t * e){
 extern uint8_t get_wifi_connect_flag(void);
 
 void ui_intercomPage_screen_init(){
-//	intercom_init();
-	
-	struct netdev *ndev=(struct netdev*)dev_get(HG_WIFI0_DEVID);
-		if(ndev){
-			struct netif *netif=(struct netif *)ndev->stack_data;
-			netif_set_down(netif);
-			netif_set_up(netif);
-		}
-
 
 	static lv_style_t intercomPageStyle;
 
@@ -896,7 +782,7 @@ void ui_intercomPage_screen_init(){
 
 	lv_obj_add_flag( ui_focusImg, LV_OBJ_FLAG_HIDDEN );   /// Flags
 
-#if 1
+#if 0
 	//配对 显示
 	ui_pairPanel = lv_obj_create(ui_intercomPage);
 	lv_obj_set_width( ui_pairPanel, 180);
@@ -1063,7 +949,7 @@ void ui_intercomPage_screen_init(){
 #endif
 
 	 lv_obj_set_style_bg_color(ui_intercomPage, lv_color_hex(0x000000), 0);
-	#if 1
+	#if 0
 	if (sys_cfgs.wifi_mode == WIFI_MODE_STA) {
 		ieee80211_iface_start(WIFI_MODE_STA);
 		os_sleep_ms(50);

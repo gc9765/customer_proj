@@ -285,8 +285,8 @@
 #define DEV_SENSOR_BF20A6 1
 #define DEV_SENSOR_OV2640 0
 
-#define PIN_DVP_RESET  255//PA_12//
-#define PIN_DVP_PDN    255
+#define PIN_DVP_RESET   255//PA_12//
+#define PIN_DVP_PDN     255
 #define PIN_DVP_PDN1    255
 
 //////////////SET QC/////////////////////////////

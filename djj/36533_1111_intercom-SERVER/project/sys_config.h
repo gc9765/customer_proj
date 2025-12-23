@@ -31,7 +31,7 @@
 #endif
 
 #ifndef WIFI_RX_BUFF_SIZE
-#define  WIFI_RX_BUFF_SIZE (17*1024)   //17
+#define  WIFI_RX_BUFF_SIZE (8*1024)   //17
 #endif
 
 #ifndef SYS_HEAP_START
@@ -39,7 +39,7 @@
 #endif
 
 #ifndef SKB_POOL_SIZE
-#define SKB_POOL_SIZE     (20*1024)    //20
+#define SKB_POOL_SIZE     (10*1024)    //20
 #endif
 
 //#define WIFI_SINGLE_DEV

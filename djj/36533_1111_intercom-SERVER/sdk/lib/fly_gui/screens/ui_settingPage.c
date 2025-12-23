@@ -36,6 +36,9 @@ extern void lv_page_select(uint8_t page);
 /* 格式化 SD 卡（atfs_test.c内包含实现） */
 extern void format_sdcard(void);
 
+/* 相册缓存清理功能 */
+extern void album_clear_all_cache(void);
+
 
 /*======================== 本文件全局 ========================*/
 
@@ -225,6 +228,8 @@ static void create_submenu(uint8_t main_index)
     /* 更新顶部标题显示 */
     if (ui_settTopBar && titleLabel) {
         lv_label_set_text(titleLabel, sub_title);
+        /* 强制重新设置字体，确保中文字符正确显示 */
+        lv_obj_set_style_text_font(titleLabel, &djj18bit1, 0);
     }
 
     const char **table = NULL;
@@ -249,8 +254,8 @@ static void create_submenu(uint8_t main_index)
             sub_sel_index = (uint8_t)camSetParam.screenProtectSet; /* PRO_TIME 枚举 0~4 */
             break;
         case SETMENU_SOUND:
-            sub_sel_index = camSetParam.volumeSet;    /* 0~3 */
-            if (sub_sel_index >= sub_item_cnt) sub_sel_index = 1; /* 如果超出范围，默认选"低" */
+            sub_sel_index = camSetParam.volumeSet ;    /* 0~3 */
+//            if (sub_sel_index > sub_item_cnt) sub_sel_index = 1; /* 如果超出范围，默认选"低" */
             break;
         case SETMENU_FORMAT:
             sub_sel_index = 1;                        /* 默认选"取消" */
@@ -269,7 +274,7 @@ static void create_submenu(uint8_t main_index)
             lv_obj_t *label = lv_label_create(subMenuContainer);
             lv_label_set_text(label, "DJJ Ver: 1.0.0-2025-12-04"); /* 这里换成真实版本字符串 */
             lv_obj_set_style_text_color(label, lv_color_hex(0x666666), 0);
-            lv_obj_set_style_text_font(label, &alifangyuan16, 0);
+            lv_obj_set_style_text_font(label, &djj18bit1, 0);
             lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
         }
         return;
@@ -341,15 +346,23 @@ break;
 
     case SETMENU_SLEEP:
         camSetParam.autOffSet = (OFF_TIME)sub_sel_index;  /* 0~4 */
+		
         break;
 
     case SETMENU_SCREEN_SAVER:
         camSetParam.screenProtectSet = (PRO_TIME)sub_sel_index;
+
+        uint16_t autooff_times[] = {0, 60, 180, 300 , 600};
+        if(sub_sel_index < sizeof(autooff_times)/sizeof(autooff_times[0])) {
+//            set_autoPowerOff_times(autooff_times[sub_sel_index]);
+        }
+        // 如果启用了屏幕保护，重置休眠计时器
+
         break;
 
     case SETMENU_SOUND:
-        camSetParam.volumeSet = sub_sel_index;            /* 0~3 */
-		if(camSetParam.volumeSet == 9) camSetParam.volumeSet = 10;
+        camSetParam.volumeSet = sub_sel_index*3;            /* 0~3 */
+		if(camSetParam.volumeSet >= 9) camSetParam.volumeSet = 10;
 		volume_adjust(camSetParam.volumeSet);             //设置音量
         break;
 
@@ -357,6 +370,9 @@ break;
         if (sub_sel_index == 0) {
             /* 选中了"确定" - 执行增强版格式化操作 */
             format_sdcard();
+
+            /* 格式化完成后清理相册缩略图缓存 */
+            album_clear_all_cache();
         }
         break;
 
@@ -552,6 +568,17 @@ void ui_event_settPage(lv_event_t * e)
                 lv_obj_clear_flag(menuContainer, LV_OBJ_FLAG_HIDDEN);
             update_setting_highlight();
             break;
+		case AD_BACK:
+        /* 取消，不保存，直接回一级 */
+        in_subpage = false;
+        if (subMenuContainer) {
+            lv_obj_del(subMenuContainer);
+            subMenuContainer = NULL;
+        }
+        if (menuContainer)
+            lv_obj_clear_flag(menuContainer, LV_OBJ_FLAG_HIDDEN);
+        update_setting_highlight();
+        break;
         default:
             break;
         }
@@ -694,7 +721,7 @@ void ui_settingPage_screen_init(void)
     lv_label_set_text(titleLabel,
         (const char*)ui_language_switch[camSetParam.languageType][SETTING_STR]);
     lv_obj_set_style_text_color(titleLabel, lv_color_hex(0x666666), 0);
-    lv_obj_set_style_text_font(titleLabel, &alifangyuan18, 0);
+    lv_obj_set_style_text_font(titleLabel, &djj18bit1, 0);
     lv_obj_set_style_text_opa(titleLabel, LV_OPA_COVER, 0);
     lv_obj_set_style_text_letter_space(titleLabel, 1, 0);
     lv_obj_align(titleLabel, LV_ALIGN_CENTER, 0, 0);

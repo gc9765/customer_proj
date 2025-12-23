@@ -40,6 +40,26 @@
 #include "vpp_ipf_src.h"
 #include "play_pcmtone.h"
 
+#include "osal/task.h"
+#include "osal/semaphore.h"
+#include "osal/mutex.h"
+
+
+uint8_t s_cam_shot_return_pending = 0;
+
+/* 发送 worker */
+static uint8_t              s_cam_send_inited = 0;
+static struct os_task       s_cam_send_task;
+static struct os_semaphore  s_cam_send_sem;
+static struct os_mutex      s_cam_send_mtx;
+static char                 s_cam_send_path[64] = {0};
+static volatile uint8_t     s_cam_send_has_job = 0;
+
+/* LVGL timers：拍照完成检查 + 回微信后再 post */
+static lv_timer_t *cam_return_timer = NULL;
+static lv_timer_t *cam_post_timer   = NULL;
+static char        s_cam_post_path[64] = {0};
+
 extern volatile uint8_t bbm_displaydecode_run;
 extern Vpp_stream photo_msg;
 extern lcd_msg lcd_info;
@@ -47,14 +67,41 @@ extern volatile vf_cblk g_vf_cblk;
 extern gui_msg gui_cfg;
 
 extern volatile uint8_t itp_finish;
-extern uint32_t get_takephoto_thread_status();
-extern uint8_t get_bbm_take_photo_status(void);
-extern void bbm_take_photo(uint8_t num);
-extern int bbm_start_record(void);
-extern void bbm_stop_record(void);
-extern void client_send_wakeup_cmd(uint8_t cnt);
-extern void client_send_sleep_cmd(uint8_t cnt);
+extern uint32_t get_takephoto_thread_status(void);
+extern uint8_t  get_bbm_take_photo_status(void);
+extern void     bbm_take_photo(uint8_t num);
+extern int      bbm_start_record(void);
+extern void     bbm_stop_record(void);
 
+extern void     client_send_wakeup_cmd(uint8_t cnt);
+extern void     client_send_sleep_cmd(uint8_t cnt);
+
+extern uint8_t  get_wifi_connect_flag(void);
+extern int      wechat_send_image_file_as_msg(const char *img_path, uint16_t *out_msg_id, uint32_t *out_size);
+
+extern uint8_t  g_camera_from_page;
+extern uint8_t  s_wechat_focus_idx;
+extern void     wechat_update_focus_style(void);
+
+extern volatile char g_last_shot_path[64];                 // 来自 AT_save_photo.c
+extern void     wechat_set_pending_photo_bubble(const char *img_path); // 来自 ui_WeChatPage.c
+extern void     wechat_request_focus_idx(uint8_t idx);     // 来自 ui_WeChatPage.c
+
+static void cam_photo_send_request(const char *img_path);
+static void cam_post_to_wechat_cb(lv_timer_t *t);
+static void cam_photo_send_worker(void *arg);
+static void cam_photo_send_init_once(void);
+static void cam_check_photo_done_cb(lv_timer_t *t);
+
+/* 简单安全拷贝 */
+static void safe_strcpy(char *dst, uint32_t dst_sz, const char *src)
+{
+    if (!dst || dst_sz == 0) return;
+    if (!src) { dst[0] = '\0'; return; }
+    uint32_t i = 0;
+    for (; i + 1 < dst_sz && src[i]; i++) dst[i] = src[i];
+    dst[i] = '\0';
+}
 
 
 void doubleSenor_pdn_set(void)
@@ -120,11 +167,129 @@ void dvp_frontback_exchange(void)
 #endif
 	}
 
+}
+//网络发送 worker
+static void cam_photo_send_worker(void *arg)
+{
+    (void)arg;
+    os_printf("[camimg] worker start\r\n");
 
+    while (1) {
+        os_sema_down(&s_cam_send_sem, -1);
+
+        char path[64] = {0};
+
+        os_mutex_lock(&s_cam_send_mtx, -1);
+        if (s_cam_send_has_job) {
+            safe_strcpy(path, sizeof(path), s_cam_send_path);
+            s_cam_send_has_job = 0;
+        }
+        os_mutex_unlock(&s_cam_send_mtx);
+
+        if (!path[0]) continue;
+
+        if (!get_wifi_connect_flag()) {
+            os_printf("[camimg] offline, skip send: %s\r\n", path);
+            continue;
+        }
+
+        uint16_t msg_id = 0;
+        uint32_t size   = 0;
+        int ret = wechat_send_image_file_as_msg(path, &msg_id, &size);
+
+        os_printf("[camimg] send ret=%d msg_id=%u size=%u path=%s\r\n",
+                  ret, (unsigned)msg_id, (unsigned)size, path);
+    }
 }
 
+static void cam_photo_send_init_once(void)
+{
+    if (s_cam_send_inited) return;
+    s_cam_send_inited = 1;
 
+    os_mutex_init(&s_cam_send_mtx);
+    os_sema_init(&s_cam_send_sem, 0);
 
+    OS_TASK_INIT("cam_img_send",
+                 &s_cam_send_task,
+                 cam_photo_send_worker,
+                 0,
+                 OS_TASK_PRIORITY_NORMAL,
+                 3072);   /* 栈给大一点，发送里通常会有局部buf */
+}
+
+/* UI线程调用：投递发送请求（不阻塞） */
+static void cam_photo_send_request(const char *img_path)
+{
+    if (!img_path || !img_path[0]) return;
+
+    cam_photo_send_init_once();
+
+    os_mutex_lock(&s_cam_send_mtx, -1);
+    safe_strcpy(s_cam_send_path, sizeof(s_cam_send_path), img_path);
+    s_cam_send_has_job = 1;                 /* 覆盖旧任务，只发最新一张 */
+    os_mutex_unlock(&s_cam_send_mtx);
+
+    os_sema_up(&s_cam_send_sem);
+}
+
+static void cam_post_to_wechat_cb(lv_timer_t *t)
+{
+    (void)t;
+
+    /* 等真的回到微信页再做 */
+    if (camera_gvar.page_cur != PAGE_WECHAT) return;
+
+    if (cam_post_timer) {
+        lv_timer_del(cam_post_timer);
+        cam_post_timer = NULL;
+    }
+
+    if (s_cam_post_path[0]) {
+        /* 现在在 wechat 页，调用它就不会 skip ui_post 了 */
+        wechat_set_pending_photo_bubble(s_cam_post_path);
+
+        /* 再后台发送（你之前的 worker 投递） */
+        cam_photo_send_request(s_cam_post_path);
+
+        s_cam_post_path[0] = '\0';
+    }
+}
+
+//拍照完成轮询 timer
+static void cam_check_photo_done_cb(lv_timer_t *t)
+{
+    (void)t;
+
+    if (get_bbm_take_photo_status() == 0) {
+
+        if (cam_return_timer) {
+            lv_timer_del(cam_return_timer);
+            cam_return_timer = NULL;
+        }
+
+        char path[64] = {0};
+        safe_strcpy(path, sizeof(path), (const char *)g_last_shot_path);
+
+        printf("[Camera] Photo saved: %s. Returning to WeChat...\r\n", path);
+		if (g_last_shot_path[0] != '\0') {
+			os_strncpy(s_cam_post_path, (const char *)g_last_shot_path, sizeof(s_cam_post_path)-1);
+			s_cam_post_path[sizeof(s_cam_post_path)-1] = '\0';
+		}
+
+		/* 先回微信页 */
+		wechat_request_focus_idx(3);
+		s_cam_shot_return_pending = 0;
+		lv_page_select(PAGE_WECHAT);
+
+		/* 再等微信页起来后做 UI + send */
+		if (cam_post_timer == NULL) {
+			cam_post_timer = lv_timer_create(cam_post_to_wechat_cb, 50, NULL);  // 50~200ms都行
+		}
+    }
+}
+
+//相机页按键事件
 void ui_event_cameraPage(lv_event_t * e){
 	uint32_t* key_val = (uint32_t*)e->param;
 	lv_event_code_t code = lv_event_get_code(e);
@@ -142,190 +307,101 @@ void ui_event_cameraPage(lv_event_t * e){
 		switch(*key_val)
 		{
 			case AD_VOL_UP:
-			break;
+				break;
 
 			case AD_VOL_DOWN:
-			break;
+				break;
 
 			case AD_LEFT: 
-			break;
+				break;
 
 			case AD_RIGHT:		
-			// case KEY_CAMERA_SWITCH:
-			// //os_sleep_ms(500);
-			// if(rec_open == 0){
-			// 	{
-			// 		extern	volatile uint8_t sdh_init_flag;
-			// 		if(sdh_init_flag)
-			// 		break;
-			// 	}
-			// 	delay_open_lcd_flash(10);
-			// 	camera_gvar.camera_switch = !camera_gvar.camera_switch;
-			// 	printf("##camera_gvar.camera_switch =%d \n\r",camera_gvar.camera_switch);
-			// 	dvp_frontback_exchange();
-			// }
-			// break;
+				break;
 			case AD_BACK:
 			case KEY_BACK:
+				// 如果正在等待自动返回，取消定时器
+				if (cam_return_timer) {
+					lv_timer_del(cam_return_timer);
+					cam_return_timer = NULL;
+					s_cam_shot_return_pending = 0;
+				}
+				if(rec_open)
+				{
+					bbm_stop_record();
+					rec_open = 0;
+				}
 
-			if(rec_open)
-			{
-				bbm_stop_record();
-				rec_open = 0;
-				// lv_time_reset(&rec_time);
-				// lv_time_display(ui_RecTimeIconLabel,&rec_time,NULL);
-				// lv_obj_add_flag(ui_RecTimeIconLabel, LV_OBJ_FLAG_HIDDEN); 
-				// dv_flash_onoff(rec_open); //stop
-			}
-
-			lv_page_select(PAGE_HOME);
-			if(camera_gvar.camera_switch==1)
-			{
-				camera_gvar.camera_switch = 0;
-				printf("##camera_gvar.camera_switch =%d \n\r",camera_gvar.camera_switch);
-				dvp_frontback_exchange();
-			}
-			break;
-
-	
-
-			// case KEY_IPF_SWITCH:
-			// if(camera_gvar.specialeffects_index<RAHMEN_MAX_NUMS)
-			// {
-			// 	//vpp_set_ifp_en(vpp_dev,0);
-			// 	os_sleep_ms(10);
-			// 	get_ifp_addr(ipf_imgSrcTable[camera_gvar.specialeffects_index]);
-			// 	//vpp_set_ifp_addr(vpp_dev,(uint32_t)vpp_ifp_addr);
-			// 	// vpp_set_ifp_en(vpp_dev,1);
-			// 	//ipf_index_num=camera_gvar.specialeffects_index;
-			// 	rahmen_open =1;
-			// }
-
-
-			// if(camera_gvar.specialeffects_index<(RAHMEN_MAX_NUMS))
-			// 	++camera_gvar.specialeffects_index;
-			// else
-			// {
-			// 		camera_gvar.specialeffects_index=0;
-			// 		//vpp_set_ifp_en(vpp_dev,0);
-			// 		rahmen_open =0;
-			// }
-			// ipf_update_flag=1;
-
-			// break;
-
-
-			// case KEY_WAKEUP:
-			// client_send_wakeup_cmd(2);
-			// break;
-
-			// case KEY_SLEEPIN:
-			// case KEY_POWEROFF:
-			// //client_send_sleep_cmd(1);
-			// lv_page_select(PAGE_POWEROFF);
-			// //bbm_stop_record();
-			// break;
-
-			// case KEY_BROWSE:
-			// lv_page_select(PAGE_ALBUM);
-			// bbm_stop_record();
-			// break;
+				if (g_camera_from_page == PAGE_WECHAT) 
+				{ 
+					printf("## camera back -> WECHAT\n"); 
+					wechat_request_focus_idx(3);
+					lv_page_select(PAGE_WECHAT);
+				} else 
+				{ 
+					printf("## camera back -> HOME\n"); 
+					lv_page_select(PAGE_HOME); 
+					camera_gvar.pagebtn_index = 1; // 看你主页相机是第几个 
+					camera_gvar.immediately_reflash_flag = 1;
+				}
+				if(camera_gvar.camera_switch==1)
+				{
+					camera_gvar.camera_switch = 0;
+					printf("##camera_gvar.camera_switch =%d \n\r",camera_gvar.camera_switch);
+					dvp_frontback_exchange();
+				}
+				break;
 
 			case AD_PRESS:
 			case KEY_CAMERA:	
-			os_printf("## take photo  AD_PRESS\n");		
-			if(rec_open==0)
-			{
-				#if 1
-				if(camera_gvar.sd_online==0)
+				os_printf("## take photo  AD_PRESS\n");	
+				printf("rec_open = %d\r\n",rec_open);
+				if(rec_open==0)
 				{
-					noticeAnimationStart(4);
-					break;
-				}
+					#if 1
+					if(camera_gvar.sd_online==0)
+					{
+						noticeAnimationStart(4);
+						break;
+					}
 
-				/*came界面 拍照按键声音*/
-				play_pcmtone(&shottone);
-			    /*came界面 拍照按键声音*/
+					/*came界面 拍照按键声音*/
+					play_pcmtone(&shottone);
+					/*came界面 拍照按键声音*/
 
 
-				os_printf("## take photo\n");
-				takePhotoAnimationStart();
-
-				if(get_bbm_take_photo_status()==0)
-					bbm_take_photo(1);
-				#else
-				printf("gui_cfg.take_photo_num:%d\r\n",gui_cfg.take_photo_num);
-
-				if(!get_takephoto_thread_status())
-				{
-					take_photo_thread_init(gui_cfg.photo_w,gui_cfg.photo_h,gui_cfg.take_photo_num);
-
+					os_printf("## take photo\n");
 					takePhotoAnimationStart();
+
+					if(get_bbm_take_photo_status()==0){
+						bbm_take_photo(1);
+						/* 如果相机是从微信进来的：拍完自动回微信 */
+						if (g_camera_from_page == PAGE_WECHAT) {
+							s_cam_shot_return_pending = 1;
+							// 创建定时器，每100ms检查一次拍照是否完成
+							if (cam_return_timer == NULL) {
+								cam_return_timer = lv_timer_create(cam_check_photo_done_cb, 100, NULL);
+							}
+						}
+					}
+					#else
+					printf("gui_cfg.take_photo_num:%d\r\n",gui_cfg.take_photo_num);
+
+					if(!get_takephoto_thread_status())
+					{
+						take_photo_thread_init(gui_cfg.photo_w,gui_cfg.photo_h,gui_cfg.take_photo_num);
+
+						takePhotoAnimationStart();
+					}
+					else
+					{
+						os_printf("%s err,get_takephoto_thread_status:%d\n",__FUNCTION__,get_takephoto_thread_status());
+					}
+					#endif
 				}
-				else
-				{
-					os_printf("%s err,get_takephoto_thread_status:%d\n",__FUNCTION__,get_takephoto_thread_status());
-				}
-				#endif
-			}
-			break;
+				break;
 			
-//			case KEY_RECORD:
-//			if(rec_open == 0){
-//
-//				if(camera_gvar.sd_online==0)
-//				{
-//					noticeAnimationStart(4);
-//					break;
-//				}
-//				printf("rec start\r\n");
-//				#if 0
-//				if(gui_cfg.rec_h == gui_cfg.dvp_h){
-//					jpg_cfg(HG_JPG0_DEVID,VPP_DATA0);
-//				}
-//				else{
-//					scale_from_vpp_to_jpg(scale_dev,(uint32)yuvbuf,gui_cfg.dvp_w,gui_cfg.dvp_h,gui_cfg.rec_w,gui_cfg.rec_h);
-//					jpg_cfg(HG_JPG0_DEVID,SCALER_DATA);
-//				}
-//				photo_msg.out0_h = gui_cfg.rec_h;
-//				photo_msg.out0_w = gui_cfg.rec_w;
-//		
-//			
-//				start_record_thread(30,16);
-//				#else
-//				if(bbm_start_record())
-//				#endif
-//				{
-//					rec_open = 1;
-//					dv_flash_onoff(rec_open);  //start
-//					lv_time_reset(&rec_time);
-//					lv_time_display(ui_RecTimeIconLabel,&rec_time,"#FF0000");
-//					lv_obj_clear_flag(ui_RecTimeIconLabel, LV_OBJ_FLAG_HIDDEN );   /// Flags 
-//				}
-//				
-//			}
-//			else{
-//				#if 0
-//				scale_close(scale_dev);
-//				send_stop_record_cmd();
-//				#else
-//				bbm_stop_record();
-//				#endif
-//				
-//				rec_open = 0;
-//				lv_time_reset(&rec_time);
-//				lv_time_display(ui_RecTimeIconLabel,&rec_time,NULL);
-//				lv_obj_add_flag(ui_RecTimeIconLabel, LV_OBJ_FLAG_HIDDEN); 
-//
-//				dv_flash_onoff(rec_open); //stop
-//
-//			}
-//			break;
-
-
-
 			default:
-			break;
+				break;
 		}
 	}
 	else if(code==LV_EVENT_CLICKED)
@@ -580,7 +656,9 @@ void ui_cameraPage_screen_init(){
 	lv_obj_set_style_text_opa(ui_dialogContent, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 	lv_label_set_recolor(ui_dialogContent, 1);
 	lv_label_set_text(ui_dialogContent,"请插入#ff0088 存储卡#");
+	
 
+	
 	#if 0
     lv_obj_t *btn_cancel = lv_btn_create(ui_dialogPanel);
     lv_obj_set_size(btn_cancel, 36, 26);  
